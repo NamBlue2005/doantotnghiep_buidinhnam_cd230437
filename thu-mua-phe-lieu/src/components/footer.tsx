@@ -104,10 +104,25 @@ const DRIVER_NAV_ITEMS = [
   },
 ];
 
+const ADMIN_NAV_ITEMS = [
+  {
+    name: "Quản lý ND",
+    path: "/admin",
+    icon: (props: any) => (
+      <div className={`flex items-center justify-center rounded-full p-2 mb-1 shadow-sm ${props.active ? "bg-primary text-white" : "bg-blue-100 text-primary"}`}>
+        <Icon icon="zi-setting" size={20} />
+      </div>
+    ),
+  },
+];
+
 export default function Footer() {
   const [handle] = useRouteHandle();
   const user = useAtomValue(userInfoState) as any;
-  const navItems = user?.role === 2 ? DRIVER_NAV_ITEMS : SELLER_NAV_ITEMS;
+  
+  let navItems = SELLER_NAV_ITEMS;
+  if (user?.role === 2) navItems = DRIVER_NAV_ITEMS;
+  if (user?.role === 3) navItems = ADMIN_NAV_ITEMS;
 
   if (!handle?.noFooter) {
     return (

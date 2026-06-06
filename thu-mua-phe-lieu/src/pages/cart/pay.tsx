@@ -54,8 +54,8 @@ export default function Pay() {
           sellerId: user.id, // Dùng ID thật của người dùng hiện tại
           items: itemsPayload,
           address: address.alias ? `${address.alias}, ${address.address}` : address.address, // Ghép số nhà và tên đường
-          latitude: 0.0, // Đổi từ null thành 0.0 để tránh lỗi Java không parse được kiểu double nguyên thủy
-          longitude: 0.0,
+          latitude: address.lat || 0.0, // Truyền tọa độ thật đã lưu vào Backend
+          longitude: address.lng || 0.0,
           imageUrl: "",
           pickupTime: deliveryTime.length === 16 ? `${deliveryTime}:00` : deliveryTime, // Thêm :00 để Spring Boot không bị lỗi parse thời gian
         }),

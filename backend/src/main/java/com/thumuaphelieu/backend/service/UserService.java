@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -50,11 +51,16 @@ public class UserService {
     // 3. Switch Mode: Đổi vai trò (Người bán <-> Tài xế)
     @Transactional
     public User switchRole(Long id, Integer newRole) {
-        if (newRole != 1 && newRole != 2) {
-            throw new IllegalArgumentException("Role không hợp lệ. Chỉ chấp nhận 1 (Người bán) hoặc 2 (Tài xế).");
+        if (newRole != 1 && newRole != 2 && newRole != 3) {
+            throw new IllegalArgumentException("Role không hợp lệ. Chỉ chấp nhận 1 (Người bán), 2 (Tài xế) hoặc 3 (Admin).");
         }
         User user = getUserById(id);
         user.setRole(newRole);
         return userRepository.save(user);
+    }
+
+    // 4. Lấy danh sách tất cả người dùng (Cho Admin)
+    public List<User> getAllUsers() {
+        return userRepository.findAll();
     }
 }

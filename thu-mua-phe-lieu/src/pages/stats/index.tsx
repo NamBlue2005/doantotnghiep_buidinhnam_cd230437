@@ -12,29 +12,34 @@ export default function StatsPage() {
   );
   const navigate = useNavigate();
 
+  // Chỉ lọc ra những đơn hàng có trạng thái gốc là COMPLETED để hiển thị trong Lịch sử giao dịch
+  const validOrders = completedOrdersLoadable.state === "hasData" 
+    ? completedOrdersLoadable.data.filter((o: any) => o.originalStatus === 'COMPLETED') 
+    : [];
+
   return (
     <div className="min-h-full bg-background flex flex-col overflow-y-auto pb-4">
       <StatsWidget />
       
       <div className="px-4">
         <h3 className="font-bold text-gray-800 mb-3 text-sm">
-          Lịch sử giao dịch ({completedOrdersLoadable.state === "hasData" ? completedOrdersLoadable.data.length : 0})
+          Lịch sử giao dịch ({validOrders.length})
         </h3>
         
         {completedOrdersLoadable.state === "loading" && (
           <div className="flex justify-center p-4"><Icon icon="zi-spinner" className="animate-spin text-primary" /></div>
         )}
         
-        {completedOrdersLoadable.state === "hasData" && completedOrdersLoadable.data.length === 0 && (
+        {completedOrdersLoadable.state === "hasData" && validOrders.length === 0 && (
           <div className="text-center text-gray-500 py-4 text-sm bg-white rounded-lg border-[0.5px] border-black/10">
             Chưa có giao dịch nào hoàn thành
           </div>
         )}
         
-        {completedOrdersLoadable.state === "hasData" && completedOrdersLoadable.data.length > 0 && (
+        {completedOrdersLoadable.state === "hasData" && validOrders.length > 0 && (
           <div className="bg-white rounded-xl shadow-sm border-[0.5px] border-black/10 overflow-hidden">
             <List noSpacing>
-              {completedOrdersLoadable.data.map((order: any) => (
+              {validOrders.map((order: any) => (
                 <List.Item
                   key={order.id}
                   onClick={() => navigate(`/order/${order.id}`, { state: order })}

@@ -55,6 +55,7 @@ function OrderDetailPage() {
       return;
     }
 
+
     const confirmMsg = user.role === 2 
       ? "TÀI XẾ LƯU Ý: Bạn có chắc chắn muốn hủy đơn hàng này không? Việc hủy đơn thường xuyên có thể ảnh hưởng đến tài khoản của bạn!" 
       : "Bạn có chắc chắn muốn hủy yêu cầu thu gom này không?";
@@ -338,6 +339,16 @@ function OrderDetailPage() {
                 >
                   <Icon icon="zi-chat" size={20} />
                 </Button>
+                {/* TÀI XẾ SẼ THẤY THÊM NÚT CHỈ ĐƯỜNG ĐẾN CHỖ NGƯỜI BÁN */}
+                {user?.role === 2 && order.latitude && order.longitude && order.latitude !== 0 && (
+                  <Button 
+                    size="small"
+                    variant="secondary"
+                    onClick={() => openWebview({ url: `https://www.google.com/maps/dir/?api=1&destination=${order.latitude},${order.longitude}` })}
+                  >
+                    <Icon icon="zi-location" size={20} className="text-green-500" />
+                  </Button>
+                )}
               </div>
             </div>
           </div>
@@ -371,7 +382,8 @@ function OrderDetailPage() {
         )}
 
         {/* Phần đánh giá khi đơn hàng đã hoàn thành */}
-        {order.status === "completed" && (
+        {/* ĐÃ TẠM ẨN ĐỂ TẬP TRUNG BÁO CÁO LUỒNG CHÍNH */}
+        {false && order.status === "completed" && (
           <div className="bg-white rounded-lg p-4 border-[0.5px] border-black/10 mt-4 space-y-3">
             <h3 className="font-bold text-primary">Đánh giá giao dịch</h3>
             <div className="text-sm text-gray-600">Bạn cảm thấy đối tác thế nào?</div>
@@ -409,7 +421,12 @@ function OrderDetailPage() {
       )}
       
       {order.status === "pending" && user?.role === 2 && (
-        <div className="flex-none p-4 bg-section border-t border-black/10">
+        <div className="flex-none p-4 bg-section border-t border-black/10 space-y-3">
+          {order.latitude && order.longitude && order.latitude !== 0 && (
+            <Button fullWidth variant="secondary" onClick={() => openWebview({ url: `https://www.google.com/maps/search/?api=1&query=${order.latitude},${order.longitude}` })}>
+              Xem vị trí trên bản đồ
+            </Button>
+          )}
           <Button fullWidth disabled={applying} onClick={handleApplyOrder}>
             Nhận đơn thu gom
           </Button>

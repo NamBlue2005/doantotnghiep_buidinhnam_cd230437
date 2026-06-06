@@ -11,6 +11,7 @@ export default function ProfilePage() {
   const navigate = useNavigate();
   const user = useAtomValue(userInfoState) as any;
   const isDriver = user?.role === 2;
+  const isAdmin = user?.role === 3;
 
   return (
     <div className="min-h-full bg-background p-4 space-y-2.5">
@@ -26,6 +27,14 @@ export default function ProfilePage() {
             suffix={<Icon icon="zi-chevron-right" />}
             onClick={() => navigate("/stats")}
           />
+          {isAdmin && (
+            <List.Item
+              title="Quản lý hệ thống (Admin)"
+              prefix={<Icon icon="zi-setting" className="text-blue-500" />}
+              suffix={<Icon icon="zi-chevron-right" />}
+              onClick={() => navigate("/admin")}
+            />
+          )}
         </List>
       </div>
 

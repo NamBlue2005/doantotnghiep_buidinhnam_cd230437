@@ -9,6 +9,7 @@ import { useMemo } from "react";
 import { useRouteHandle } from "@/hooks";
 import { getConfig } from "@/utils/template";
 import headerIllus from "@/static/header-illus.svg";
+import logoImg from "@/img/logo.png";
 import TransitionLink from "./transition-link";
 import { Icon } from "zmp-ui";
 
@@ -42,7 +43,7 @@ export default function Header() {
         {handle?.logo ? (
           <>
             <img
-              src={getConfig((c) => c.template.logoUrl)}
+              src={logoImg}
               className="flex-none w-8 h-8 rounded-full"
             />
             <div className="flex-1 overflow-hidden">

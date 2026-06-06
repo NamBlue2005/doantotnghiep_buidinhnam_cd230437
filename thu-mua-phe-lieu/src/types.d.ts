@@ -5,6 +5,7 @@ export interface UserInfo {
   phone: string;
   email: string;
   address: string;
+  role?: number;
 }
 
 export interface Product {
@@ -42,6 +43,8 @@ export interface ShippingAddress {
   address: string;
   name: string;
   phone: string;
+  lat?: number;
+  lng?: number;
 }
 
 export interface Station {

@@ -3,28 +3,19 @@ import {
   PackageIcon,
   VoucherIcon,
 } from "@/components/vectors";
-import { useToBeImplemented } from "@/hooks";
 import { useNavigate } from "react-router-dom";
+import { useAtomValue } from "jotai";
+import { userInfoState } from "@/state";
 
 export default function ProfileActions() {
   const navigate = useNavigate();
-  const toBeImplemented = useToBeImplemented();
+  const user = useAtomValue(userInfoState) as any;
 
   return (
-    <div className="bg-white rounded-lg p-4 grid grid-cols-3 gap-4 border-[0.5px] border-black/15">
+    <div className="bg-white rounded-lg p-4 flex justify-around gap-4 border-[0.5px] border-black/15">
       {[
         {
-          label: "Đổi quà",
-          icon: VoucherIcon,
-          onClick: toBeImplemented,
-        },
-        {
-          label: "Lịch sử đổi quà",
-          icon: OrderHistoryIcon,
-          onClick: toBeImplemented,
-        },
-        {
-          label: "Đơn bán của tôi",
+          label: user?.role === 1 ? "Đơn bán của tôi" : "Đơn thu gom của tôi",
           icon: PackageIcon,
           onClick: () => navigate("/orders"),
         },

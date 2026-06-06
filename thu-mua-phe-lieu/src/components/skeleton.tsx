@@ -56,20 +56,13 @@ export function PageSkeleton() {
 
 export function ProductItemSkeleton() {
   return (
-    <div className="flex flex-col cursor-progress group bg-section rounded-xl p-2 shadow-[0_10px_24px_#0D0D0D17]">
-      <div className="w-full aspect-square bg-skeleton animate-pulse rounded-lg" />
-      <div className="pt-2 pb-3">
-        <div className="text-xs pt-1 pb-0.5 bg-skeleton animate-pulse rounded-lg inline-block text-transparent">
-          Lorem ipsum dolor sit
-        </div>
-        <div className="mt-0.5 text-sm font-bold bg-skeleton animate-pulse rounded-lg inline-block text-transparent">
-          Lorem ipsum dolor sit
-        </div>
-        <div className="text-3xs space-x-0.5 bg-skeleton animate-pulse rounded-lg inline-block text-transparent">
-          Lorem ipsum dolor sit
-        </div>
+    <div className="flex flex-col items-center justify-center p-3 border border-gray-300 rounded-xl shadow-sm bg-white h-[80px]">
+      <div className="text-sm font-bold bg-skeleton animate-pulse rounded-lg inline-block text-transparent mb-2">
+        Lorem ipsum
       </div>
-      <Button variant="secondary" size="small"></Button>
+      <div className="text-xs bg-skeleton animate-pulse rounded-lg inline-block text-transparent">
+        10,000đ
+      </div>
     </div>
   );
 }

@@ -5,6 +5,8 @@ import com.thumuaphelieu.backend.enums.OrderStatus;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.annotations.NotFound;
+import org.hibernate.annotations.NotFoundAction;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -24,6 +26,7 @@ public class Order {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "seller_id", nullable = false)
+    @NotFound(action = NotFoundAction.IGNORE)
     private User seller;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -48,6 +51,7 @@ public class Order {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "matched_driver_id")
+    @NotFound(action = NotFoundAction.IGNORE)
     private User matchedDriver;
 
     @Column(name = "final_price")

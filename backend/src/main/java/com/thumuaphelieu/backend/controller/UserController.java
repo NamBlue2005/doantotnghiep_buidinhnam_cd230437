@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -32,6 +33,19 @@ public class UserController {
     @PutMapping("/{id}/switch-role")
     public ResponseEntity<User> switchRole(@PathVariable Long id, @RequestParam Integer newRole) {
         User updatedUser = userService.switchRole(id, newRole);
+        return ResponseEntity.ok(updatedUser);
+    }
+
+    // Lấy danh sách tất cả người dùng (Dành cho Admin)
+    @GetMapping
+    public ResponseEntity<List<User>> getAllUsers() {
+        return ResponseEntity.ok(userService.getAllUsers());
+    }
+
+    // Admin cập nhật quyền cho người dùng
+    @PutMapping("/{id}/role")
+    public ResponseEntity<User> updateUserRole(@PathVariable Long id, @RequestBody Map<String, Integer> request) {
+        User updatedUser = userService.switchRole(id, request.get("role"));
         return ResponseEntity.ok(updatedUser);
     }
 }

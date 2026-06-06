@@ -1,5 +1,5 @@
 import CONFIG from "@/config";
-import { userInfoKeyState, userInfoState } from "@/state";
+import { API_BASE_URL, userInfoKeyState, userInfoState } from "@/state";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
@@ -14,13 +14,33 @@ function ProfileEditorPage() {
   return (
     <form
       className="h-full flex flex-col justify-between"
-      onSubmit={(e) => {
+      onSubmit={async (e) => {
         e.preventDefault();
         const data = new FormData(e.currentTarget);
         const newUserInfo = { ...userInfo };
         data.forEach((value, key) => {
           newUserInfo[key] = value;
         });
+        
+        // ĐỒNG BỘ THÔNG TIN MỚI LÊN BACKEND
+        try {
+          await fetch(`${API_BASE_URL}/users/${userInfo?.id}`, {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              "ngrok-skip-browser-warning": "true"
+            },
+            body: JSON.stringify({
+              phone: newUserInfo.phone,
+              fullName: newUserInfo.name,
+              email: newUserInfo.email,
+              address: newUserInfo.address
+            })
+          });
+        } catch (error) {
+          console.error("Lỗi đồng bộ thông tin lên Backend:", error);
+        }
+
         localStorage.setItem(
           CONFIG.STORAGE_KEYS.USER_INFO,
           JSON.stringify(newUserInfo)
@@ -39,10 +59,9 @@ function ProfileEditorPage() {
         />
         <Input
           name="phone"
-          label="Số điện thoại (Đồng bộ từ Zalo)"
+          label="Số điện thoại"
           required
-          value={userInfo?.phone}
-          disabled
+          defaultValue={userInfo?.phone}
         />
         <Input
           name="email"

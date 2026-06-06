@@ -31,6 +31,9 @@ import { calculateDistance } from "./utils/location";
 import { formatDistant } from "./utils/format";
 import CONFIG from "./config";
 
+// Nhúng trực tiếp file ảnh local (Đảm bảo thư mục img nằm trong thư mục src)
+import bannerImg from "@/img/banner 1.jpg";
+
 // CHÚ Ý: Dán URL ngrok của bạn vào đây khi DEPLOY
 // Ví dụ: "https://abcdef.ngrok-free.app/api"
 // Thay thế bằng link Ngrok của bạn (Nhớ giữ lại chữ /api ở cuối nhé)
@@ -83,6 +86,10 @@ export const userInfoState = atom<Promise<UserInfo>>(async (get) => {
     const numberId = userInfo.id.split('').map(c => c.charCodeAt(0)).join('');
     const uniquePhone = isDev ? "0912345678" : "09" + numberId.substring(0, 8);
 
+    // FIX LOGIC: Dùng số điện thoại đã lưu trong Trang cá nhân để đăng nhập
+    // Nếu người dùng mới vào lần đầu (chưa có số ở trang cá nhân), dùng số tạo từ Zalo ID
+    const loginPhone = savedUserInfo.phone || phone || uniquePhone;
+
     try {
       const response = await fetch(`${API_BASE_URL}/users/login`, {
         method: "POST",
@@ -91,9 +98,10 @@ export const userInfoState = atom<Promise<UserInfo>>(async (get) => {
           "ngrok-skip-browser-warning": "true"
         },
         body: JSON.stringify({
-          phone: uniquePhone,
+          phone: loginPhone,
           fullName: userInfo.name,
-          avatarUrl: userInfo.avatar
+          avatarUrl: userInfo.avatar,
+          zaloId: userInfo.id // Truyền thêm ID thật của Zalo xuống Backend
         })
       });
       const dbUser = await response.json();
@@ -109,7 +117,7 @@ export const userInfoState = atom<Promise<UserInfo>>(async (get) => {
       role: dbUserRole, // Luôn lấy quyền từ Database của Backend
       name: userInfo.name,
       avatar: userInfo.avatar,
-      phone: savedUserInfo.phone || phone,
+      phone: loginPhone,
       email: savedUserInfo.email || "",
       address: savedUserInfo.address || "",
     };
@@ -146,8 +154,7 @@ export const phoneState = atom(async () => {
 });
 
 export const bannersState = atom(() => [
-  "https://img.freepik.com/free-vector/flat-world-environment-day-horizontal-banner-template_23-2149367500.jpg",
-  "https://img.freepik.com/free-vector/gradient-environmental-banner-template_23-2149818817.jpg"
+  bannerImg,
 ]);
 
 export const tabsState = atom(["Tất cả", "Nam", "Nữ", "Trẻ em"]);
@@ -160,6 +167,10 @@ export const categoriesState = atom(async () => {
     { id: 2, name: "Nhựa", icon: "https://cdn-icons-png.flaticon.com/512/3061/3061108.png" },
     { id: 3, name: "Sắt/Thép", icon: "https://cdn-icons-png.flaticon.com/512/2910/2910795.png" },
     { id: 4, name: "Nhôm/Đồng", icon: "https://cdn-icons-png.flaticon.com/512/2910/2910787.png" },
+    { id: 1, name: "Giấy/Carton", image: "https://cdn-icons-png.flaticon.com/512/2910/2910777.png" },
+    { id: 2, name: "Nhựa", image: "https://cdn-icons-png.flaticon.com/512/3061/3061108.png" },
+    { id: 3, name: "Sắt/Thép", image: "https://cdn-icons-png.flaticon.com/512/2910/2910795.png" },
+    { id: 4, name: "Nhôm/Đồng", image: "https://cdn-icons-png.flaticon.com/512/2910/2910787.png" },
   ] as Category[];
 });
 
@@ -171,16 +182,16 @@ export const categoriesStateUpwrapped = unwrap(
 export const productsState = atom(async (get) => {
   const categories = await get(categoriesState);
   const products = [
-    { id: 1, categoryId: 1, name: "Giấy báo", price: 4000, image: "https://img.freepik.com/free-vector/stack-newspapers_1308-96425.jpg", detail: "Thu mua giấy báo cũ" },
-    { id: 2, categoryId: 1, name: "Vỏ hộp giấy", price: 3000, image: "https://img.freepik.com/free-vector/stack-cardboard-boxes_1308-114421.jpg", detail: "Vỏ hộp giấy, bao bì" },
-    { id: 3, categoryId: 1, name: "Giấy hồ sơ", price: 4500, image: "https://img.freepik.com/free-vector/stack-documents_1308-112233.jpg", detail: "Giấy A4, hồ sơ văn phòng" },
-    { id: 4, categoryId: 1, name: "Giấy thùng", price: 3500, image: "https://img.freepik.com/free-vector/cardboard-box_1308-112244.jpg", detail: "Thùng carton các loại" },
-    { id: 5, categoryId: 3, name: "Sắt đặc", price: 10000, image: "https://img.freepik.com/free-vector/metal-construction-materials_1308-112345.jpg", detail: "Sắt công trình, sắt đặc" },
-    { id: 6, categoryId: 3, name: "Sắt tôn", price: 8000, image: "https://img.freepik.com/free-vector/corrugated-iron_1308-112346.jpg", detail: "Tôn cũ, phế liệu tôn" },
-    { id: 7, categoryId: 2, name: "Chai PET", price: 5000, image: "https://img.freepik.com/free-vector/plastic-water-bottles_1308-83134.jpg", detail: "Chai nhựa trong suốt" },
-    { id: 8, categoryId: 4, name: "Lon nhôm", price: 12000, image: "https://img.freepik.com/free-vector/aluminum-cans_1308-123456.jpg", detail: "Vỏ lon nước ngọt, bia" },
-    { id: 9, categoryId: 4, name: "Đồng thau", price: 40000, image: "https://img.freepik.com/free-vector/copper-pipes_1308-112348.jpg", detail: "Đồng phế liệu, đồng thau" },
-    { id: 10, categoryId: 4, name: "Nhôm cửa/ Thanh", price: 15000, image: "https://img.freepik.com/free-vector/aluminum-profiles_1308-112349.jpg", detail: "Nhôm thanh, cửa nhôm cũ" },
+    { id: 1, categoryId: 1, name: "Giấy báo", price: 4000, image: "", detail: "Thu mua giấy báo cũ" },
+    { id: 2, categoryId: 1, name: "Vỏ hộp giấy", price: 3000, image: "", detail: "Vỏ hộp giấy, bao bì" },
+    { id: 3, categoryId: 1, name: "Giấy hồ sơ", price: 4500, image: "", detail: "Giấy A4, hồ sơ văn phòng" },
+    { id: 4, categoryId: 1, name: "Giấy thùng", price: 3500, image: "", detail: "Thùng carton các loại" },
+    { id: 5, categoryId: 3, name: "Sắt đặc", price: 10000, image: "", detail: "Sắt công trình, sắt đặc" },
+    { id: 6, categoryId: 3, name: "Sắt tôn", price: 8000, image: "", detail: "Tôn cũ, phế liệu tôn" },
+    { id: 7, categoryId: 2, name: "Chai PET", price: 5000, image: "", detail: "Chai nhựa trong suốt" },
+    { id: 8, categoryId: 4, name: "Lon nhôm", price: 12000, image: "", detail: "Vỏ lon nước ngọt, bia" },
+    { id: 9, categoryId: 4, name: "Đồng thau", price: 40000, image: "", detail: "Đồng phế liệu, đồng thau" },
+    { id: 10, categoryId: 4, name: "Nhôm cửa/ Thanh", price: 15000, image: "", detail: "Nhôm thanh, cửa nhôm cũ" },
   ] as (Product & { categoryId: number })[];
   return products.map((product) => ({
     ...product,
@@ -313,7 +324,9 @@ export const notificationsState = atom(async (get) => {
       headers: { "ngrok-skip-browser-warning": "true" },
       cache: "no-store"
     });
-    return await response.json();
+    const data = await response.json();
+    if (!Array.isArray(data)) return [];
+    return data;
   } catch (error) {
     console.error("Lỗi lấy thông báo:", error);
     return [];
@@ -328,15 +341,35 @@ export const userStatsState = atom(async (get) => {
     return null;
   }
   try {
-    const response = await fetch(`${API_BASE_URL}/stats/${user.id}?role=${user.role}`, {
+    // Gọi API lấy danh sách đơn hàng thay vì gọi API stats cũ để lọc được trạng thái
+    let url = `${API_BASE_URL}/orders/seller/${user.id}`;
+    if (user.role === 2) {
+      url = `${API_BASE_URL}/orders/driver/${user.id}`;
+    }
+    const response = await fetch(url, {
       headers: { "ngrok-skip-browser-warning": "true" },
       cache: "no-store"
     });
-    if (response.ok) return await response.json();
-    return null;
+    if (response.ok) {
+      const allOrders = await response.json();
+      if (!Array.isArray(allOrders)) return { totalOrders: 0, totalWeight: 0, totalRevenue: 0 };
+      
+      // CHỈ LỌC NHỮNG ĐƠN HÀNG CÓ TRẠNG THÁI "COMPLETED" (Đã hoàn thành)
+      const completedOrders = allOrders.filter((o: any) => String(o.status || "").toUpperCase() === 'COMPLETED');
+      
+      let totalWeight = 0;
+      let totalRevenue = 0;
+      completedOrders.forEach((order: any) => {
+        const weight = order.actualWeight || order.estimatedWeight || 0;
+        totalWeight += weight;
+        totalRevenue += order.amount || order.totalAmount || (weight * 5000);
+      });
+      return { totalOrders: completedOrders.length, totalWeight, totalRevenue };
+    }
+    return { totalOrders: 0, totalWeight: 0, totalRevenue: 0 };
   } catch (error) {
     console.error("Lỗi lấy thống kê:", error);
-    return null;
+    return { totalOrders: 0, totalWeight: 0, totalRevenue: 0 };
   }
 });
 
@@ -365,6 +398,11 @@ export const ordersState = atomFamily((status: OrderStatus) =>
       
       // In ra Console để bạn nhìn thấy "Thành quả" Backend trả về
       console.log("🔥 Dữ liệu thật từ Backend:", realOrders);
+
+      // BỌC LÓT 2: Nếu Backend trả về lỗi 500 (Object báo lỗi) thay vì mảng danh sách, dừng lại ngay!
+      if (!Array.isArray(realOrders)) {
+        return [];
+      }
 
       // 2. Format lại dữ liệu Backend để giao diện cũ không bị sập (Crash)
       const mappedOrders = realOrders.map((order: any) => ({
@@ -401,6 +439,11 @@ export const availableOrdersState = atom(async (get) => {
     });
     const realOrders = await response.json();
     
+    // BỌC LÓT: Chống sập App nếu API bị lỗi
+    if (!Array.isArray(realOrders)) {
+      return [];
+    }
+
     const mappedOrders = realOrders.map((order: any) => ({
       ...order,
       originalStatus: order.status,

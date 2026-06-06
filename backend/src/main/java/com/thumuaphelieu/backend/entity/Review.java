@@ -3,6 +3,8 @@ package com.thumuaphelieu.backend.entity;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.NotFound;
+import org.hibernate.annotations.NotFoundAction;
 
 import java.time.LocalDateTime;
 
@@ -23,10 +25,12 @@ public class Review {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "reviewer_id", nullable = false)
+    @NotFound(action = NotFoundAction.IGNORE)
     private User reviewer;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "reviewed_id", nullable = false)
+    @NotFound(action = NotFoundAction.IGNORE)
     private User reviewed;
 
     @Column(nullable = false)

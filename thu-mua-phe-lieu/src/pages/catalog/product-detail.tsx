@@ -18,15 +18,6 @@ export default function ProductDetailPage() {
     <div className="w-full h-full flex flex-col">
       <div className="flex-1 overflow-y-auto">
         <div className="w-full p-4 pb-2 space-y-4 bg-section">
-          <img
-            key={product.id}
-            src={product.image}
-            alt={product.name}
-            className="w-full h-full object-cover rounded-lg"
-            style={{
-              viewTransitionName: `product-image-${product.id}`,
-            }}
-          />
           <div>
             <div className="text-xl font-bold text-primary">
               {formatPrice(product.price)} / kg

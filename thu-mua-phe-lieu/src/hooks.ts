@@ -161,6 +161,7 @@ export function useRouteHandle() {
         noBack?: boolean;
         noFloatingCart?: boolean;
         scrollRestoration?: number;
+        backRoute?: string;
       }
     | undefined
   >[];

@@ -1,5 +1,5 @@
-import { shippingAddressState, savedAddressesState } from "@/state";
-import { useAtom } from "jotai";
+import { shippingAddressState, savedAddressesState, userInfoState } from "@/state";
+import { useAtom, useAtomValue } from "jotai";
 import { useResetAtom } from "jotai/utils";
 import { useState } from "react";
 import toast from "react-hot-toast";
@@ -10,10 +10,12 @@ import { getSetting, authorize } from "zmp-sdk/apis";
 function ShippingAddressPage() {
   const [selectedAddress, setSelectedAddress] = useAtom(shippingAddressState);
   const [savedAddresses, setSavedAddresses] = useAtom(savedAddressesState);
+  const userInfo = useAtomValue(userInfoState);
   const navigate = useNavigate();
   const [showForm, setShowForm] = useState(savedAddresses.length === 0);
   const [addressInput, setAddressInput] = useState("");
   const [loadingLocation, setLoadingLocation] = useState(false);
+  const [tempLocation, setTempLocation] = useState<{lat: number, lng: number} | null>(null);
 
   const handleSaveNewAddress = (e: any) => {
     e.preventDefault();
@@ -22,6 +24,8 @@ function ShippingAddressPage() {
     data.forEach((value, key) => {
       newAddress[key] = value;
     });
+    newAddress.lat = tempLocation?.lat || 0.0;
+    newAddress.lng = tempLocation?.lng || 0.0;
     
     setSavedAddresses([...savedAddresses, newAddress]);
     setSelectedAddress(newAddress);
@@ -67,6 +71,8 @@ function ShippingAddressPage() {
         async (position) => {
           const { latitude, longitude } = position.coords;
           try {
+            // Lưu tọa độ lại để lát gửi lên lúc Đăng đơn
+            setTempLocation({ lat: latitude, lng: longitude });
             // Sử dụng API miễn phí của OpenStreetMap để dịch toạ độ thành địa chỉ
             const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&addressdetails=1&accept-language=vi`);
             const data = await res.json();
@@ -150,7 +156,7 @@ function ShippingAddressPage() {
                   className="text-xs text-blue-600 font-medium flex items-center gap-1 cursor-pointer active:opacity-70 p-1"
                   onClick={handleGetCurrentLocation}
                 >
-                  <Icon icon={loadingLocation ? "zi-spinner" : "zi-location"} className={loadingLocation ? "animate-spin" : ""} size={16} />
+                  <Icon icon={(loadingLocation ? "zi-spinner" : "zi-location") as any} className={loadingLocation ? "animate-spin" : ""} size={16} />
                   {loadingLocation ? "Đang định vị..." : "Đề xuất vị trí hiện tại"}
                 </div>
               </div>
@@ -160,11 +166,13 @@ function ShippingAddressPage() {
                 name="name"
                 label="Tên người nhận"
                 placeholder="Nhập tên người nhận"
+                defaultValue={userInfo?.name}
               />
               <Input
                 name="phone"
                 label="Số điện thoại"
                 placeholder="0912345678"
+                defaultValue={userInfo?.phone}
               />
             </div>
             {savedAddresses.length > 0 && (

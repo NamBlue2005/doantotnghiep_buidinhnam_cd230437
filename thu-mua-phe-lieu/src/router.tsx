@@ -12,6 +12,7 @@ import ProfileEditorPage from "./pages/profile/editor";
 import DriverHomePage from "./pages/driver";
 import NotificationsPage from "./pages/notifications";
 import StatsPage from "./pages/stats";
+import AdminPage from "./pages/admin";
 
 const router = createBrowserRouter(
   [
@@ -110,6 +111,14 @@ const router = createBrowserRouter(
         element: <StatsPage />,
         handle: {
           title: "Thống kê",
+        },
+      },
+      {
+        path: "/admin",
+        element: <AdminPage />,
+        handle: {
+          title: "Quản trị hệ thống",
+          noFooter: true,
         },
       },
       ],

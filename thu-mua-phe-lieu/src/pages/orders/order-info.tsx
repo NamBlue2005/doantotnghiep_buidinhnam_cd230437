@@ -2,8 +2,12 @@ import { LocationMarkerLineIcon } from "@/components/vectors";
 import { Icon, List, Button } from "zmp-ui";
 import DeliverySummary from "../cart/delivery-summary";
 import { openWebview } from "zmp-sdk/apis";
+import { useAtomValue } from "jotai";
+import { userInfoState } from "@/state";
 
 function OrderInfo(props: { order: any }) {
+  const user = useAtomValue(userInfoState) as any;
+
   // Ưu tiên dùng text địa chỉ (có số nhà cụ thể) để Google Maps cắm mốc chính xác 100%
   const mapQuery = props.order.address 
     ? encodeURIComponent(props.order.address)
@@ -23,35 +27,37 @@ function OrderInfo(props: { order: any }) {
       />
       
       {/* Bản đồ Google Maps thu nhỏ (Mini Map) */}
-      <div className="px-4 pb-3">
-        <div className="w-full h-40 rounded-lg overflow-hidden border border-black/10 relative bg-gray-100 shadow-inner">
-          <iframe 
-            width="100%" 
-            height="100%" 
-            style={{ border: 0 }}
-            loading="lazy"
-            allowFullScreen
-            referrerPolicy="no-referrer-when-downgrade"
-            src={`https://maps.google.com/maps?q=${mapQuery}&z=16&output=embed`}
-          ></iframe>
-          
-          {/* Nút Chỉ đường - Mở Google Maps và tự động lấy GPS của Tài xế */}
-          <div className="absolute bottom-2 right-2">
-            <Button 
-              size="small" 
-              variant="secondary"
-              onClick={() => {
-                openWebview({ url: `https://www.google.com/maps/dir/?api=1&destination=${mapQuery}` });
-              }}
-            >
-              <div className="flex items-center gap-1 text-blue-600">
-                <Icon icon="zi-location" size={18} />
-                <span className="font-bold text-xs">Chỉ đường</span>
-              </div>
-            </Button>
+      {user?.role === 2 && (
+        <div className="px-4 pb-3">
+          <div className="w-full h-40 rounded-lg overflow-hidden border border-black/10 relative bg-gray-100 shadow-inner">
+            <iframe 
+              width="100%" 
+              height="100%" 
+              style={{ border: 0 }}
+              loading="lazy"
+              allowFullScreen
+              referrerPolicy="no-referrer-when-downgrade"
+              src={`https://maps.google.com/maps?q=${mapQuery}&z=16&output=embed`}
+            ></iframe>
+            
+            {/* Nút Chỉ đường - Mở Google Maps và tự động lấy GPS của Tài xế */}
+            <div className="absolute bottom-2 right-2">
+              <Button 
+                size="small" 
+                variant="secondary"
+                onClick={() => {
+                  openWebview({ url: `https://www.google.com/maps/dir/?api=1&destination=${mapQuery}` });
+                }}
+              >
+                <div className="flex items-center gap-1 text-blue-600">
+                  <Icon icon="zi-location" size={18} />
+                  <span className="font-bold text-xs">Chỉ đường</span>
+                </div>
+              </Button>
+            </div>
           </div>
         </div>
-      </div>
+      )}
       
       <List.Item prefix={<Icon icon="zi-info-circle" />} title="Loại phế liệu">
         <span className="text-sm font-medium text-right line-clamp-2">

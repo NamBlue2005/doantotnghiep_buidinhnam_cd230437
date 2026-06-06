@@ -29,12 +29,14 @@ export default function CartList() {
   const handleUpdateProduct = (index: number, product: any) => {
     const newCart = [...cart];
     newCart[index].product = product;
+    newCart[index] = { ...newCart[index], product: product };
     setCart(newCart);
   };
 
   const handleUpdateQuantity = (index: number, quantity: number) => {
     const newCart = [...cart];
     newCart[index].quantity = quantity;
+    newCart[index] = { ...newCart[index], quantity: quantity };
     setCart(newCart);
   };
 

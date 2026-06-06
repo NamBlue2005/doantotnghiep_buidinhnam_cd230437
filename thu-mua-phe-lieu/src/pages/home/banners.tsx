@@ -1,20 +1,17 @@
-import Carousel from "@/components/carousel";
 import { useAtomValue } from "jotai";
 import { bannersState } from "@/state";
 
 export default function Banners() {
   const banners = useAtomValue(bannersState);
+  const mainBanner = banners[0];
 
   return (
-    <Carousel
-      slides={banners.map((banner) => (
-        <img 
-          key={banner} 
-          className="w-full rounded-lg aspect-[2/1] object-cover" 
-          src={banner} 
-          alt="Banner Thu Mua Phế Liệu" 
-        />
-      ))}
-    />
+    <div className="w-full px-4 pt-4">
+      <img 
+        className="w-full rounded-lg aspect-[2/1] object-cover shadow-sm border border-black/10" 
+        src={mainBanner} 
+        alt="Banner Thu Mua Phế Liệu" 
+      />
+    </div>
   );
 }
