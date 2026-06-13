@@ -22,11 +22,12 @@ public class UserController {
 
     @PostMapping("/login")
     public ResponseEntity<User> login(@RequestBody Map<String, String> payload) {
+        String zaloId = payload.get("zaloId");
         String phone = payload.get("phone");
         String fullName = payload.get("fullName");
         String avatarUrl = payload.get("avatarUrl");
 
-        User user = userService.loginOrRegister(phone, fullName, avatarUrl);
+        User user = userService.loginOrRegister(zaloId, phone, fullName, avatarUrl);
         return ResponseEntity.ok(user);
     }
 

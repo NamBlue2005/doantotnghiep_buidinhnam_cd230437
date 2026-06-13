@@ -24,7 +24,7 @@ public class OrderApplication {
     @JoinColumn(name = "order_id", nullable = false)
     private Order order;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "driver_id", nullable = false)
     @NotFound(action = NotFoundAction.IGNORE)
     private User driver;

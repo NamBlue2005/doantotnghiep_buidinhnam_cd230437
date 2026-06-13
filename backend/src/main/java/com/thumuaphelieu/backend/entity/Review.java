@@ -23,12 +23,12 @@ public class Review {
     @JoinColumn(name = "order_id", nullable = false)
     private Order order;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "reviewer_id", nullable = false)
     @NotFound(action = NotFoundAction.IGNORE)
     private User reviewer;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "reviewed_id", nullable = false)
     @NotFound(action = NotFoundAction.IGNORE)
     private User reviewed;

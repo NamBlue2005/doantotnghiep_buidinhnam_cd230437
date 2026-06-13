@@ -58,7 +58,7 @@ function OrderSummary(props: { order: any; full?: boolean }) {
       <div className="flex justify-between items-center px-4 py-2 space-x-4">
         <div className="text-xs">Khối lượng ước tính</div>
         <div className="text-sm font-medium text-primary">
-          {props.order.estimatedWeight} kg
+          {Number(props.order.estimatedWeight).toLocaleString('en-US')} kg
         </div>
       </div>
     </Section>

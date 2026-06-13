@@ -11,7 +11,7 @@ function OrderItem(props: any) {
       suffix={
         <div className="text-sm font-medium flex flex-col justify-center items-end h-full text-primary">
           <div className="text-xs text-gray-500 font-normal">Ước tính</div>
-          Khoảng {props.quantity} kg
+          Khoảng {Number(props.quantity).toLocaleString('en-US')} kg
         </div>
       }
     >

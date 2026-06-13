@@ -15,7 +15,10 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique = true, nullable = false, length = 15)
+    @Column(name = "zalo_id", unique = true)
+    private String zaloId;
+
+    @Column(nullable = false, length = 15)
     private String phone;
 
     @Column(name = "full_name", nullable = false, length = 100)
@@ -45,6 +48,14 @@ public class User {
     // Getters and Setters
     public Long getId() {
         return id;
+    }
+
+    public String getZaloId() {
+        return zaloId;
+    }
+
+    public void setZaloId(String zaloId) {
+        this.zaloId = zaloId;
     }
 
     public void setId(Long id) {

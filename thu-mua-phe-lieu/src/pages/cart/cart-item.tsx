@@ -79,7 +79,7 @@ export default function CartItem(props: CartItemProps) {
         </div>
         <div className="text-sm font-medium text-primary text-right">
           <div className="text-xs text-gray-500 font-normal">Ước tính</div>
-          Khoảng {quantity} kg
+          Khoảng {Number(quantity).toLocaleString('en-US')} kg
         </div>
       </animated.div>
     </div>

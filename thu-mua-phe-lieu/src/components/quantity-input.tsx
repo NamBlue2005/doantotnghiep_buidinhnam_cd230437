@@ -31,7 +31,8 @@ export default function QuantityInput(props: QuantityInputProps) {
         style={{ width: `calc(${String(props.value).length}ch + 16px)` }}
         className="flex-1 text-center font-medium text-xs px-2 focus:outline-none [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
         type="number"
-        inputMode="numeric"
+        step="any"
+        inputMode="decimal"
         value={localValue}
         onChange={(e) => setLocalValue(e.currentTarget.value)}
         onBlur={() =>

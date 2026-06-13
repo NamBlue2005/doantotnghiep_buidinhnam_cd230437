@@ -80,7 +80,7 @@ function OrderInfo(props: { order: any }) {
       </List.Item>
 
       <List.Item prefix={<Icon icon="zi-list-1" />} title="Khối lượng ước tính">
-        <span className="text-sm text-primary font-medium">{props.order.estimatedWeight} kg</span>
+        <span className="text-sm text-primary font-medium">{Number(props.order.estimatedWeight).toLocaleString('en-US')} kg</span>
       </List.Item>
     </List>
   );

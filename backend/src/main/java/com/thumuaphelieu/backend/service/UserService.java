@@ -19,20 +19,28 @@ public class UserService {
         this.userRepository = userRepository;
     }
 
-    // 1. Đăng nhập hoặc Đăng ký tự động (Dựa vào số điện thoại từ Zalo)
+    // 1. Đăng nhập hoặc Đăng ký tự động (Ưu tiên Zalo ID)
     @Transactional
-    public User loginOrRegister(String phone, String fullName, String avatarUrl) {
-        Optional<User> existingUser = userRepository.findByPhone(phone);
+    public User loginOrRegister(String zaloId, String phone, String fullName, String avatarUrl) {
+        Optional<User> existingUser = Optional.empty();
+        
+        if (zaloId != null && !zaloId.trim().isEmpty()) {
+            existingUser = userRepository.findByZaloId(zaloId);
+        } else if (phone != null && !phone.trim().isEmpty()) {
+            existingUser = userRepository.findByPhone(phone);
+        }
 
         if (existingUser.isPresent()) {
             User user = existingUser.get();
             // Cập nhật thông tin mới nhất từ Zalo (nếu có thay đổi)
             if (fullName != null) user.setFullName(fullName);
             if (avatarUrl != null) user.setAvatarUrl(avatarUrl);
+            if (phone != null && !phone.isEmpty()) user.setPhone(phone);
             return userRepository.save(user);
         } else {
             // Tạo tài khoản mới nếu chưa tồn tại
             User newUser = new User();
+            newUser.setZaloId(zaloId);
             newUser.setPhone(phone);
             newUser.setFullName(fullName);
             newUser.setAvatarUrl(avatarUrl);

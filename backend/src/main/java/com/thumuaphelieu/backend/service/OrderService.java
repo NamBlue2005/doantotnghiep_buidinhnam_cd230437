@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -77,12 +78,11 @@ public class OrderService {
         }
         order.setEstimatedWeight(totalWeight);
 
+        // Tạo mã đơn hàng ngẫu nhiên gồm chữ và số (Ví dụ: ODA1B2C3D4)
+        order.setOrderCode("OD" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
+
         Order savedOrder = orderRepository.save(order);
         
-        // Tạo mã đơn hàng chuyên nghiệp (Ví dụ: OD00000001) và lưu lại vào Database
-        savedOrder.setOrderCode(String.format("OD%08d", savedOrder.getId()));
-        orderRepository.save(savedOrder);
-
         notificationService.sendNotification(sellerId, "Đăng đơn thành công", "Đơn hàng của bạn đã được hệ thống ghi nhận. Vui lòng chờ tài xế ứng tuyển.", savedOrder.getId());
         return savedOrder;
     }

@@ -24,7 +24,7 @@ public class Order {
     @Column(name = "order_code", unique = true, length = 20)
     private String orderCode;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "seller_id", nullable = false)
     @NotFound(action = NotFoundAction.IGNORE)
     private User seller;
@@ -49,7 +49,7 @@ public class Order {
     @Column(length = 50)
     private OrderStatus status = OrderStatus.PENDING;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "matched_driver_id")
     @NotFound(action = NotFoundAction.IGNORE)
     private User matchedDriver;

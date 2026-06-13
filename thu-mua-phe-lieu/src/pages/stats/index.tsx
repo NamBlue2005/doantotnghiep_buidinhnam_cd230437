@@ -27,7 +27,7 @@ export default function StatsPage() {
         </h3>
         
         {completedOrdersLoadable.state === "loading" && (
-          <div className="flex justify-center p-4"><Icon icon="zi-spinner" className="animate-spin text-primary" /></div>
+          <div className="flex justify-center p-4"><Icon icon={"zi-spinner" as any} className="animate-spin text-primary" /></div>
         )}
         
         {completedOrdersLoadable.state === "hasData" && validOrders.length === 0 && (
@@ -44,18 +44,18 @@ export default function StatsPage() {
                   key={order.id}
                   onClick={() => navigate(`/order/${order.id}`, { state: order })}
                   className="border-b border-gray-100 last:border-b-0"
-                  title={<span className="font-semibold text-gray-800">Mã đơn: {order.orderCode || `OD${String(order.id).padStart(8, '0')}`}</span>}
+                  title={<span className="font-semibold text-gray-800">Mã đơn: {order.orderCode || `OD${String(order.id).padStart(8, '0')}`}</span> as any}
                   subTitle={
-                    <div className="text-xs text-gray-500 mt-1 space-y-0.5">
-                      <div>{new Date(order.completedAt || order.createdAt).toLocaleDateString('vi-VN')} - {order.estimatedWeight} kg</div>
+                    (<div className="text-xs text-gray-500 mt-1 space-y-0.5">
+                      <div>{new Date(order.completedAt || order.createdAt).toLocaleDateString('vi-VN')} - {Number(order.estimatedWeight).toLocaleString('en-US')} kg</div>
                       <div className="line-clamp-1">Loại: {order.items.map((i: any) => i.product.name.replace("Thu mua ", "")).join(", ")}</div>
-                    </div>
+                    </div>) as any
                   }
                   suffix={
-                    <div className="flex flex-col items-end">
-                      <span className="font-bold text-orange-600">+{(order.estimatedWeight * 5000).toLocaleString('vi-VN')}đ</span>
+                    (<div className="flex flex-col items-end">
+                      <span className="font-bold text-orange-600">+{(order.estimatedWeight * 5000).toLocaleString('en-US')}đ</span>
                       <Icon icon="zi-chevron-right" className="text-gray-400 mt-1" size={16} />
-                    </div>
+                    </div>) as any
                   }
                 />
               ))}
