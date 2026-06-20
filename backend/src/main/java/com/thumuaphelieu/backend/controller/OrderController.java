@@ -98,4 +98,9 @@ public class OrderController {
         orderService.completeOrder(id);
         return ResponseEntity.ok("Đã hoàn thành đơn hàng");
     }
+    @GetMapping("/all")
+public ResponseEntity<List<Order>> getAllOrdersForAdmin() {
+    return ResponseEntity.ok(orderService.getAllOrdersForAdmin());
+}
+
 }

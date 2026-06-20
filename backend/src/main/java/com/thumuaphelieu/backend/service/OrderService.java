@@ -140,6 +140,11 @@ public class OrderService {
                 .collect(Collectors.toList());
     }
 
+    // 5.2 ADMIN: Lấy tất cả đơn hàng toàn hệ thống
+    public List<Order> getAllOrdersForAdmin() {
+        return orderRepository.findAll();
+    }
+
     // 6. Lấy chi tiết 1 đơn hàng
     public Order getOrderById(Long id) {
         return orderRepository.findById(id)
