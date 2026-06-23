@@ -8,9 +8,9 @@ import org.springframework.web.bind.annotation.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.core.type.TypeReference;
 
+import java.util.List;
 import java.util.Map;
 
-@CrossOrigin("*")
 @RestController
 @RequestMapping("/api/payments")
 public class PaymentController {
@@ -27,8 +27,14 @@ public class PaymentController {
     public ResponseEntity<String> createPayment(@RequestBody Map<String, Object> payload) {
         Long orderId = Long.valueOf(payload.get("orderId").toString());
         Double amount = Double.valueOf(payload.get("amount").toString());
+        // Nhận thêm tổng khối lượng thực tế từ Frontend
+        Double actualWeight = payload.containsKey("actualWeight") 
+            ? Double.valueOf(payload.get("actualWeight").toString()) 
+            : 0.0;
+        // Nhận danh sách khối lượng thực tế của từng loại phế liệu
+        List<Map<String, Object>> itemUpdates = (List<Map<String, Object>>) payload.get("items");
 
-        String paymentUrl = zaloPayService.createPayment(orderId, amount);
+        String paymentUrl = zaloPayService.createPayment(orderId, amount, actualWeight, itemUpdates);
         return ResponseEntity.ok(paymentUrl);
     }
 

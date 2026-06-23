@@ -18,6 +18,7 @@ export interface Product {
   detail?: string;
   sizes?: Size[];
   colors?: Color[];
+  isAvailable?: boolean;
 }
 
 export interface Category {

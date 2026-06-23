@@ -79,9 +79,16 @@ function OrderInfo(props: { order: any }) {
         </span>
       </List.Item>
 
-      <List.Item prefix={<Icon icon="zi-list-1" />} title="Khối lượng ước tính">
-        <span className="text-sm text-primary font-medium">{Number(props.order.estimatedWeight).toLocaleString('en-US')} kg</span>
-      </List.Item>
+      {/* Hiển thị khối lượng thực tế nếu đơn đã hoàn thành, ngược lại hiển thị khối lượng ước tính */}
+      {props.order.originalStatus === 'COMPLETED' && props.order.actualWeight > 0 ? (
+        <List.Item prefix={<Icon icon="zi-check-circle" />} title="Khối lượng thực tế">
+          <span className="text-sm font-bold text-green-600">{Number(props.order.actualWeight).toLocaleString('en-US')} kg</span>
+        </List.Item>
+      ) : (
+        <List.Item prefix={<Icon icon="zi-list-1" />} title="Khối lượng ước tính">
+          <span className="text-sm text-primary font-medium">{Number(props.order.estimatedWeight).toLocaleString('en-US')} kg</span>
+        </List.Item>
+      )}
     </List>
   );
 }

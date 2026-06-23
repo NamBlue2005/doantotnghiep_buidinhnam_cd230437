@@ -1,6 +1,5 @@
 import ProfileActions from "./actions";
 import FollowOA from "./follow-oa";
-import Points from "./points";
 import UserInfo from "./user-info";
 import { List, Icon } from "zmp-ui";
 import { useNavigate } from "react-router-dom";
@@ -15,9 +14,7 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-full bg-background p-4 space-y-2.5">
-      <UserInfo>
-        <Points />
-      </UserInfo>
+      <UserInfo />
       
       <div className="bg-white rounded-xl shadow-sm border-[0.5px] border-black/10 overflow-hidden">
         <List noSpacing>

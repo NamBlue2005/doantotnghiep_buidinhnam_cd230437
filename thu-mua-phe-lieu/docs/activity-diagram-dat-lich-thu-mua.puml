@@ -1,0 +1,47 @@
+@startuml
+title 2.3.1. Luồng quy trình tạo đơn đặt lịch thu mua (Khách hàng)
+
+start
+
+partition "Khách hàng" {
+  :Mở Zalo Mini App;
+  :Xem danh mục phế liệu;
+  :Chọn loại phế liệu cần bán;
+  :Nhập ước tính số lượng;
+  :Thêm vào giỏ đặt lịch;
+  :Chuyển sang màn hình Đặt lịch;
+  :Nhập / xác nhận địa chỉ thu gom;
+  :Chọn thời gian hẹn;
+}
+
+repeat
+  partition "Hệ thống" {
+    if (Dữ liệu đầu vào hợp lệ?) then (Yes)
+      :Cho phép tiếp tục;
+    else (No)
+      :Hiển thị cảnh báo lỗi;
+    endif
+  }
+
+  partition "Khách hàng" {
+    :Nhập / sửa địa chỉ hoặc số điện thoại;
+  }
+repeat while (Dữ liệu đầu vào chưa hợp lệ?) is (No)
+
+partition "Khách hàng" {
+  :Bấm "Xác nhận đặt lịch";
+}
+
+partition "Backend" {
+  :Lưu đơn hàng vào CSDL;
+  :Gán trạng thái PENDING;
+  :Gửi thông báo đến tài xế quanh khu vực;
+}
+
+partition "Hệ thống" {
+  :Hiển thị xác nhận tạo đơn thành công;
+}
+
+stop
+
+@enduml

@@ -4,6 +4,12 @@ import { useAtomValue, useSetAtom } from "jotai";
 import { API_BASE_URL, cartState, shippingAddressState, userInfoState, orderRefreshKeyState, deliveryTimeState, notificationRefreshKeyState } from "@/state";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
+import {
+  getPickupTimeValidationError,
+  isProductAvailable,
+  isShippingAddressValid,
+  isValidPhoneNumber,
+} from "@/utils/order-validation";
 
 export default function Pay() {
   const [paying, setPaying] = useState(false);
@@ -15,6 +21,21 @@ export default function Pay() {
   const deliveryTime = useAtomValue(deliveryTimeState);
   const user = useAtomValue(userInfoState);
   const navigate = useNavigate();
+  const pickupTimeError = getPickupTimeValidationError(deliveryTime);
+  const hasUnavailableProduct = cart.some((item) => !isProductAvailable(item.product));
+  const addressError = !isShippingAddressValid(address)
+    ? "Vui lòng nhập đầy đủ tên, số điện thoại và địa chỉ hợp lệ."
+    : "";
+  const canCreateOrder =
+    !paying &&
+    cart.length > 0 &&
+    !hasUnavailableProduct &&
+    !pickupTimeError &&
+    !addressError &&
+    user &&
+    user.id &&
+    user.id !== "undefined" &&
+    isValidPhoneNumber(address?.phone || "");
 
   const handleCreateOrder = async () => {
     if (cart.length === 0) {
@@ -25,8 +46,22 @@ export default function Pay() {
       toast.error("Vui lòng thêm địa chỉ thu gom!");
       return;
     }
+    if (!isShippingAddressValid(address)) {
+      toast.error("Vui lòng nhập tên, số điện thoại và địa chỉ hợp lệ!");
+      return;
+    }
     if (!deliveryTime) {
       toast.error("Vui lòng chọn thời gian thu gom!");
+      return;
+    }
+
+    if (pickupTimeError) {
+      toast.error(pickupTimeError);
+      return;
+    }
+
+    if (hasUnavailableProduct) {
+      toast.error("Loại phế liệu này tạm ngưng thu mua, vui lòng chọn loại khác.");
       return;
     }
 
@@ -40,7 +75,7 @@ export default function Pay() {
     try {
       // Chuyển đổi mảng giỏ hàng thành định dạng Backend cần
       const itemsPayload = cart.map(item => ({
-        categoryId: item.product.categoryId,
+        productId: item.product.id,
         weight: item.quantity
       }));
 
@@ -71,28 +106,28 @@ export default function Pay() {
         // Lấy chi tiết lỗi từ Backend để dễ debug
         const errorText = await response.text();
         console.error("Lỗi từ Backend:", errorText);
-        
-        if (errorText.includes("Internal Server Error")) {
-          toast.error("Lỗi Backend: Hãy xem Log chữ ĐỎ trên phần mềm Eclipse/IntelliJ!", { duration: 6000 });
-        } else {
-          toast.error(`Lỗi: ${errorText.substring(0, 50)}`);
-        }
+        toast.error("Lỗi kết nối, vui lòng thử lại sau.");
       }
     } catch (error) {
       console.error("Lỗi:", error);
-      toast.error("Không thể kết nối đến Backend");
+      toast.error("Lỗi kết nối, vui lòng thử lại sau.");
     } finally {
       setPaying(false);
     }
   };
 
+  const buttonHint = hasUnavailableProduct
+    ? "Có loại phế liệu đang tạm ngưng thu mua."
+    : addressError || pickupTimeError;
+
   return (
-    <div className="flex-none flex items-center py-3 px-4 bg-section">
-      <Button
-        fullWidth
-        onClick={handleCreateOrder}
-        disabled={paying}
-      >
+    <div className="flex-none flex flex-col gap-2 py-3 px-4 bg-section">
+      {buttonHint && (
+        <div className="text-xs text-red-600">
+          {buttonHint}
+        </div>
+      )}
+      <Button fullWidth onClick={handleCreateOrder} disabled={!canCreateOrder}>
         Xác nhận
       </Button>
     </div>

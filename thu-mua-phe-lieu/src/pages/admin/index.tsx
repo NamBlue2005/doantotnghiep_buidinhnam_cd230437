@@ -3,6 +3,7 @@ import { useAtomValue } from "jotai";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { List, Tabs, Icon } from "zmp-ui";
+import CategoryManager from "./categories";
 
 export default function AdminPage() {
   const [users, setUsers] = useState<any[]>([]);
@@ -138,6 +139,10 @@ export default function AdminPage() {
                 ))
               )}
             </div>
+          </Tabs.Tab>
+
+          <Tabs.Tab key="categories" label="Sản phẩm">
+            <CategoryManager />
           </Tabs.Tab>
 
           <Tabs.Tab key="users" label="Người dùng">

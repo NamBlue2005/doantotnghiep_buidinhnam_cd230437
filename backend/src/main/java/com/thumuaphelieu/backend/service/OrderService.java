@@ -3,13 +3,13 @@ package com.thumuaphelieu.backend.service;
 import com.thumuaphelieu.backend.entity.Order;
 import com.thumuaphelieu.backend.entity.OrderItem;
 import com.thumuaphelieu.backend.entity.OrderApplication;
-import com.thumuaphelieu.backend.entity.ScrapCategory;
+import com.thumuaphelieu.backend.entity.ScrapProduct;
 import com.thumuaphelieu.backend.entity.User;
 import com.thumuaphelieu.backend.enums.ApplicationStatus;
 import com.thumuaphelieu.backend.enums.OrderStatus;
 import com.thumuaphelieu.backend.repository.OrderApplicationRepository;
 import com.thumuaphelieu.backend.repository.OrderRepository;
-import com.thumuaphelieu.backend.repository.ScrapCategoryRepository;
+import com.thumuaphelieu.backend.repository.ScrapProductRepository;
 import com.thumuaphelieu.backend.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -26,7 +26,7 @@ public class OrderService {
 
     private final OrderRepository orderRepository;
     private final UserRepository userRepository;
-    private final ScrapCategoryRepository scrapCategoryRepository;
+    private final ScrapProductRepository scrapProductRepository;
     private final OrderApplicationRepository orderApplicationRepository;
     private final NotificationService notificationService;
 
@@ -34,12 +34,12 @@ public class OrderService {
     @Autowired
     public OrderService(OrderRepository orderRepository,
                         UserRepository userRepository,
-                        ScrapCategoryRepository scrapCategoryRepository,
+                        ScrapProductRepository scrapProductRepository,
                         OrderApplicationRepository orderApplicationRepository,
                         NotificationService notificationService) {
         this.orderRepository = orderRepository;
         this.userRepository = userRepository;
-        this.scrapCategoryRepository = scrapCategoryRepository;
+        this.scrapProductRepository = scrapProductRepository;
         this.orderApplicationRepository = orderApplicationRepository;
         this.notificationService = notificationService;
     }
@@ -61,20 +61,17 @@ public class OrderService {
 
         double totalWeight = 0.0;
         for (Map<String, Object> itemData : itemsData) {
-            Long catId = Long.valueOf(itemData.get("categoryId").toString());
+            Long productId = Long.valueOf(itemData.get("productId").toString());
             Double weight = Double.valueOf(itemData.get("weight").toString());
-            ScrapCategory cat = scrapCategoryRepository.findById(catId)
-                    .orElseThrow(() -> new RuntimeException("Không tìm thấy danh mục phế liệu với ID: " + catId));
+            ScrapProduct product = scrapProductRepository.findById(productId)
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm phế liệu với ID: " + productId));
             
             OrderItem orderItem = new OrderItem();
             orderItem.setOrder(order);
-            orderItem.setCategory(cat);
+            orderItem.setProduct(product);
             orderItem.setWeight(weight);
             order.getItems().add(orderItem);
             totalWeight += weight;
-            
-            // Gán loại đầu tiên làm category chính (để không bị lỗi các tính năng cũ)
-            if (order.getCategory() == null) order.setCategory(cat);
         }
         order.setEstimatedWeight(totalWeight);
 
@@ -153,23 +150,30 @@ public class OrderService {
 
     // 7. NGƯỜI BÁN: Hủy đơn hàng
     @Transactional
-    public void cancelOrder(Long orderId, Long sellerId) {
-        // Dùng findById thay vì findByIdAndSellerId để Tài xế cũng có thể lấy ra đơn hàng (sellerId lúc này đóng vai trò là userId truyền lên)
+    public void cancelOrder(Long orderId, Long userId) {
+        // Dùng findById thay vì findByIdAndSellerId để Tài xế cũng có thể lấy ra đơn hàng (userId có thể là của người bán hoặc tài xế)
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("Đơn hàng không tồn tại!"));
 
-        if (order.getSeller().getId().equals(sellerId)) { // Nếu là Người Bán hủy
+        // Kiểm tra quyền hủy đơn một cách an toàn (chống lỗi NullPointerException)
+        boolean isSellerCancelling = order.getSeller() != null && order.getSeller().getId().equals(userId);
+        boolean isDriverCancelling = order.getMatchedDriver() != null && order.getMatchedDriver().getId().equals(userId);
+
+        if (isSellerCancelling) { // Nếu là Người Bán hủy
             if (order.getStatus() != OrderStatus.PENDING && order.getStatus() != OrderStatus.HAS_OFFERS) {
                 throw new RuntimeException("Chỉ có thể hủy đơn hàng khi chưa chốt tài xế.");
             }
             if (order.getMatchedDriver() != null) {
                 notificationService.sendNotification(order.getMatchedDriver().getId(), "Đơn hàng đã hủy", "Người bán đã hủy yêu cầu thu gom tại " + order.getAddress(), order.getId());
             }
-        } else if (order.getMatchedDriver() != null && order.getMatchedDriver().getId().equals(sellerId)) { // Nếu là Tài xế hủy
-            if (order.getStatus() != OrderStatus.MATCHED) {
-                throw new RuntimeException("Chỉ có thể hủy đơn hàng đang thực hiện.");
+        } else if (isDriverCancelling) { // Nếu là Tài xế hủy
+            // Sửa lỗi: Cho phép tài xế hủy đơn miễn là nó chưa hoàn thành hoặc chưa bị hủy.
+            if (order.getStatus() == OrderStatus.COMPLETED || order.getStatus() == OrderStatus.CANCELLED) {
+                throw new RuntimeException("Không thể hủy đơn hàng đã hoàn thành hoặc đã bị hủy.");
             }
-            notificationService.sendNotification(order.getSeller().getId(), "Tài xế đã hủy đơn", "Tài xế đã hủy yêu cầu thu mua đơn hàng của bạn.", order.getId());
+            if (order.getSeller() != null) {
+                notificationService.sendNotification(order.getSeller().getId(), "Tài xế đã hủy đơn", "Tài xế đã hủy yêu cầu thu mua đơn hàng của bạn.", order.getId());
+            }
         } else {
             throw new RuntimeException("Bạn không có quyền hủy đơn hàng này!");
         }
@@ -180,8 +184,22 @@ public class OrderService {
 
     // 8. TÀI XẾ: Hoàn thành đơn hàng
     @Transactional
-    public void completeOrder(Long orderId) {
+    public void completeOrder(Long orderId, Double actualWeight, Double amount, List<Map<String, Object>> itemUpdates) {
         Order order = getOrderById(orderId);
+        // Cập nhật tổng khối lượng và tổng thành tiền thực tế do tài xế nhập
+        order.setActualWeight(actualWeight);
+        order.setAmount(amount);
+
+        // Cập nhật khối lượng thực tế cho từng OrderItem
+        for (Map<String, Object> itemUpdate : itemUpdates) {
+            Long productId = Long.valueOf(itemUpdate.get("productId").toString());
+            Double itemActualWeight = Double.valueOf(itemUpdate.get("actualWeight").toString());
+            order.getItems().stream()
+                 .filter(oi -> oi.getProduct() != null && oi.getProduct().getId().equals(productId))
+                 .findFirst()
+                 .ifPresent(oi -> oi.setWeight(itemActualWeight));
+        }
+
         order.setStatus(OrderStatus.COMPLETED);
         order.setCompletedAt(LocalDateTime.now()); // Lưu thời gian hoàn thành
         orderRepository.save(order);
@@ -203,8 +221,13 @@ public class OrderService {
                     .collect(Collectors.toList());
         }
 
-        double totalWeight = completedOrders.stream().mapToDouble(Order::getEstimatedWeight).sum();
-        double totalRevenue = totalWeight * 5000.0; // Tạm tính 5000đ/kg
+        // Sửa logic: Dùng khối lượng và thành tiền thực tế để thống kê cho chính xác
+        double totalWeight = completedOrders.stream()
+                .mapToDouble(order -> order.getActualWeight() != null ? order.getActualWeight() : 0.0)
+                .sum();
+        double totalRevenue = completedOrders.stream()
+                .mapToDouble(order -> order.getAmount() != null ? order.getAmount() : 0.0)
+                .sum();
 
         return Map.of("totalOrders", completedOrders.size(), "totalWeight", totalWeight, "totalRevenue", totalRevenue);
     }

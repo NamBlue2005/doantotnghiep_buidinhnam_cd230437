@@ -5,14 +5,12 @@ import com.thumuaphelieu.backend.entity.OrderApplication;
 import com.thumuaphelieu.backend.service.OrderService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
-@CrossOrigin("*")
 @RestController
 @RequestMapping("/api/orders")
 public class OrderController {
@@ -83,9 +81,9 @@ public class OrderController {
 
         // API: Hủy đơn hàng
     @PutMapping("/{id}/cancel")
-    public ResponseEntity<String> cancelOrder(@PathVariable Long id, @RequestParam Long sellerId) {
+    public ResponseEntity<String> cancelOrder(@PathVariable Long id, @RequestParam Long userId) {
         try {
-            orderService.cancelOrder(id, sellerId);
+            orderService.cancelOrder(id, userId);
             return ResponseEntity.ok("Đã hủy đơn hàng thành công");
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
@@ -94,8 +92,16 @@ public class OrderController {
 
     // API 8: TÀI XẾ - Xác nhận hoàn thành đơn hàng
     @PutMapping("/{id}/complete")
-    public ResponseEntity<String> completeOrder(@PathVariable Long id) {
-        orderService.completeOrder(id);
+    public ResponseEntity<String> completeOrder(@PathVariable Long id, @RequestBody Map<String, Object> payload) {
+        // Nhận tổng khối lượng và thành tiền thực tế từ tài xế
+        Double actualWeight = Double.valueOf(payload.get("actualWeight").toString());
+        Double amount = Double.valueOf(payload.get("amount").toString());
+        // Nhận danh sách khối lượng thực tế của từng loại phế liệu
+        List<Map<String, Object>> itemUpdates = (List<Map<String, Object>>) payload.get("items");
+
+        // Gọi service để xử lý
+        orderService.completeOrder(id, actualWeight, amount, itemUpdates);
+        
         return ResponseEntity.ok("Đã hoàn thành đơn hàng");
     }
     @GetMapping("/all")

@@ -65,16 +65,23 @@ const NotificationsPage: FC = () => {
         });
         if (res.ok) {
           const order = await res.json();
+          // Tái sử dụng logic map trạng thái để các Tab hiển thị đúng
           order.originalStatus = order.status;
           order.status = (order.status === 'PENDING' || order.status === 'HAS_OFFERS') ? 'pending' : (order.status === 'COMPLETED' || order.status === 'CANCELLED' ? 'completed' : 'shipping');
-          order.items = order.items && order.items.length > 0 ? order.items.map((oi: any) => ({
-            product: {
-              name: `Thu mua ${oi.category?.name || 'Phế liệu'}`,
-              price: 0,
-              image: order.imageUrl || "https://img.freepik.com/free-vector/recycle-symbol_1284-43093.jpg"
-            },
-            quantity: oi.weight
-          })) : [{ product: { name: `Thu mua ${order.category?.name || 'Phế liệu'}`, price: 0, image: order.imageUrl || "https://img.freepik.com/free-vector/recycle-symbol_1284-43093.jpg" }, quantity: order.estimatedWeight }];
+          
+          // SỬA LỖI: Tái sử dụng logic map item giống trong state.ts để đảm bảo đồng bộ
+          const validItems = order.items ? order.items.filter((item: any) => item.product) : [];
+          order.items = validItems.length > 0
+            ? validItems.map((orderItem: any) => ({
+                product: {
+                  id: orderItem.product.id,
+                  name: `Thu mua ${orderItem.product.name || 'Phế liệu'}`,
+                  price: orderItem.product.price || 0,
+                  image: orderItem.product.imageUrl || order.imageUrl || "https://img.freepik.com/free-vector/recycle-symbol_1284-43093.jpg",
+                },
+                quantity: orderItem.weight
+              }))
+            : [{ product: { id: 0, name: `Thu mua Phế liệu`, price: 0, image: order.imageUrl || "https://img.freepik.com/free-vector/recycle-symbol_1284-43093.jpg" }, quantity: order.estimatedWeight }];
           
           navigate(`/order/${order.id}`, { state: order }); // Chuyển hướng
         }
@@ -97,7 +104,7 @@ const NotificationsPage: FC = () => {
         style={{ height: pullDistance > 0 || refreshing ? '40px' : '0px', opacity: refreshing ? 1 : pullDistance / 60 }}
       >
         {refreshing ? (
-          <div className="flex items-center space-x-2"><Icon icon="zi-spinner" className="animate-spin" /><span className="text-xs font-medium">Đang tải lại...</span></div>
+          <div className="flex items-center space-x-2"><Icon icon={"zi-spinner" as any} className="animate-spin" /><span className="text-xs font-medium">Đang tải lại...</span></div>
         ) : (
           <div className="flex items-center space-x-2"><Icon icon="zi-arrow-down" /><span className="text-xs font-medium">Kéo xuống để tải lại</span></div>
         )}
@@ -117,8 +124,8 @@ const NotificationsPage: FC = () => {
               key={notif.id}
               onClick={() => handleNotificationClick(notif)}
               className={`transition-colors ${!notif.isRead ? "bg-blue-50/50" : ""}`}
-              title={<span className={!notif.isRead ? "font-bold text-primary" : "font-semibold text-gray-700"}>{notif.title}</span>}
-              subTitle={<span className={`text-sm line-clamp-2 ${!notif.isRead ? "text-gray-800" : "text-gray-500"}`}>{notif.message}</span>}
+              title={<span className={!notif.isRead ? "font-bold text-primary" : "font-semibold text-gray-700"}>{notif.title}</span> as any}
+              subTitle={<span className={`text-sm line-clamp-2 ${!notif.isRead ? "text-gray-800" : "text-gray-500"}`}>{notif.message}</span> as any}
               prefix={
                 <div className={`${!notif.isRead ? "bg-primary text-white" : "bg-gray-200 text-gray-500"} p-2 rounded-full`}>
                   <Icon icon="zi-notif" />

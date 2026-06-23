@@ -47,13 +47,25 @@ export default function StatsPage() {
                   title={<span className="font-semibold text-gray-800">Mã đơn: {order.orderCode || `OD${String(order.id).padStart(8, '0')}`}</span> as any}
                   subTitle={
                     (<div className="text-xs text-gray-500 mt-1 space-y-0.5">
-                      <div>{new Date(order.completedAt || order.createdAt).toLocaleDateString('vi-VN')} - {Number(order.estimatedWeight).toLocaleString('en-US')} kg</div>
-                      <div className="line-clamp-1">Loại: {order.items.map((i: any) => i.product.name.replace("Thu mua ", "")).join(", ")}</div>
+                      <div>{new Date(order.completedAt || order.createdAt).toLocaleDateString('vi-VN')}</div>
+                      {/* Hiển thị tổng khối lượng thực tế */}
+                      <div>Tổng KL: <span className="font-bold text-gray-700">{Number(order.actualWeight || order.estimatedWeight).toLocaleString('en-US')} kg</span></div>
+                      
+                      {/* Hiển thị chi tiết khối lượng của từng loại phế liệu */}
+                      <div className="pt-1 space-y-0.5">
+                        {order.items.map((item: any) => (
+                          <div key={item.product.id} className="flex justify-between items-center">
+                            <span className="text-gray-500 line-clamp-1">- {item.product.name.replace("Thu mua ", "")}</span>
+                            <span className="font-medium text-gray-600">{Number(item.quantity).toLocaleString('en-US')} kg</span>
+                          </div>
+                        ))}
+                      </div>
                     </div>) as any
                   }
                   suffix={
                     (<div className="flex flex-col items-end">
-                      <span className="font-bold text-orange-600">+{(order.estimatedWeight * 5000).toLocaleString('en-US')}đ</span>
+                      {/* Hiển thị số tiền thanh toán cuối cùng */}
+                      <span className="font-bold text-orange-600">+{Number(order.total || 0).toLocaleString('en-US')}đ</span>
                       <Icon icon="zi-chevron-right" className="text-gray-400 mt-1" size={16} />
                     </div>) as any
                   }

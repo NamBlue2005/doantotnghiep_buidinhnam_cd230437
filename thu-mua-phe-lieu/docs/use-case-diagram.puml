@@ -1,0 +1,82 @@
+@startuml
+left to right direction
+
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam backgroundColor white
+skinparam ArrowColor #444444
+skinparam ActorBorderColor #333333
+skinparam ActorFontColor #222222
+skinparam UsecaseBorderColor #555555
+skinparam UsecaseFontColor #222222
+
+actor "Khách hàng" as Customer
+actor "Tài xế / Người thu mua" as Driver
+actor "Admin" as Admin
+
+rectangle "Hệ thống thu mua phế liệu" {
+  usecase "Đăng nhập /\nxác thực người dùng" as UC_Auth
+  usecase "Xem danh mục\nphế liệu" as UC_ViewCategories
+  usecase "Xem chi tiết\nsản phẩm phế liệu" as UC_ViewProduct
+  usecase "Tìm kiếm phế liệu" as UC_Search
+  usecase "Tạo đơn đặt lịch\nthu mua" as UC_CreateOrder
+  usecase "Chọn / xác nhận\nđịa chỉ thu gom" as UC_ConfirmAddress
+  usecase "Theo dõi trạng thái\nđơn hàng" as UC_TrackOrder
+  usecase "Hủy đơn hàng" as UC_CancelOrder
+  usecase "Xem thông báo\nhệ thống" as UC_Notifications
+  usecase "Quản lý hồ sơ\ncá nhân" as UC_Profile
+  usecase "Cập nhật thông tin\ncá nhân" as UC_UpdateProfile
+  usecase "Xem thống kê thu nhập\n/ lịch sử giao dịch" as UC_IncomeStats
+  usecase "Đánh giá dịch vụ" as UC_RateService
+
+  usecase "Xem danh sách đơn\nchờ nhận" as UC_PendingOrders
+  usecase "Nhận đơn thu mua" as UC_AcceptOrder
+  usecase "Cập nhật trạng thái\nđơn hàng" as UC_UpdateOrderStatus
+  usecase "Xác nhận hoàn thành\nthu gom" as UC_CompleteOrder
+  usecase "Hủy đơn thu gom" as UC_CancelPickup
+  usecase "Xử lý thanh toán" as UC_Payment
+  usecase "Chọn phương thức\nthanh toán" as UC_PaymentMethod
+
+  usecase "Quản lý toàn bộ\nđơn hàng" as UC_ManageOrders
+  usecase "Quản lý tài khoản\nngười dùng" as UC_ManageUsers
+  usecase "Quản lý danh mục\nphế liệu" as UC_ManageCatalog
+  usecase "Thêm / sửa / xóa\nphế liệu và giá" as UC_EditCatalog
+  usecase "Xem thống kê\nhệ thống" as UC_SystemStats
+}
+
+Customer --> UC_Auth
+Customer --> UC_ViewCategories
+Customer --> UC_ViewProduct
+Customer --> UC_Search
+Customer --> UC_CreateOrder
+Customer --> UC_TrackOrder
+Customer --> UC_CancelOrder
+Customer --> UC_Notifications
+Customer --> UC_Profile
+Customer --> UC_IncomeStats
+Customer --> UC_RateService
+
+Driver --> UC_Auth
+Driver --> UC_PendingOrders
+Driver --> UC_AcceptOrder
+Driver --> UC_UpdateOrderStatus
+Driver --> UC_Payment
+
+Admin --> UC_Auth
+Admin --> UC_ManageOrders
+Admin --> UC_ManageUsers
+Admin --> UC_ManageCatalog
+Admin --> UC_SystemStats
+
+UC_CreateOrder ..> UC_ConfirmAddress : <<include>>
+UC_Profile ..> UC_UpdateProfile : <<include>>
+UC_ManageCatalog ..> UC_EditCatalog : <<include>>
+UC_Payment ..> UC_PaymentMethod : <<include>>
+
+UC_CancelOrder ..> UC_TrackOrder : <<extend>>
+UC_CancelPickup ..> UC_UpdateOrderStatus : <<extend>>
+UC_CompleteOrder ..> UC_UpdateOrderStatus : <<extend>>
+
+UC_IncomeStats ..> UC_TrackOrder : <<extend>>
+
+@enduml

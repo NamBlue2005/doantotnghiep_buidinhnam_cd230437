@@ -6,6 +6,7 @@ import { Icon, List } from "zmp-ui";
 function CollapsibleOrderItems(props: {
   items: any[];
   defaultExpanded?: boolean;
+  originalStatus?: string;
 }) {
   const [collapsed, setCollapsed] = useState(
     props.defaultExpanded ? false : true
@@ -16,7 +17,7 @@ function CollapsibleOrderItems(props: {
     <>
       <List noSpacing>
         {displayItems.map((item) => (
-          <OrderItem key={item.product.id} {...item} />
+          <OrderItem key={item.product.id} {...item} originalStatus={props.originalStatus} />
         ))}
       </List>
       {displayItems.length < props.items.length && (

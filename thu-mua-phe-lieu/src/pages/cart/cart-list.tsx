@@ -5,13 +5,19 @@ import { Icon } from "zmp-ui";
 import HorizontalDivider from "@/components/horizontal-divider";
 import Select from "@/components/select";
 import QuantityInput from "@/components/quantity-input";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { Button } from "zmp-ui";
+import { getPickupTimeInputMin, getPickupTimeValidationError, isProductAvailable } from "@/utils/order-validation";
 
 export default function CartList() {
   const [cart, setCart] = useAtom(cartState);
   const products = useAtomValue(productsState);
   const [deliveryTime, setDeliveryTime] = useAtom(deliveryTimeState);
+  const availableProducts = useMemo(
+    () => products.filter((product) => isProductAvailable(product)),
+    [products]
+  );
+  const deliveryTimeError = getPickupTimeValidationError(deliveryTime);
 
   // Nếu chưa chọn phế liệu, tự động chọn mặt hàng đầu tiên làm mặc định
   useEffect(() => {
@@ -44,6 +50,19 @@ export default function CartList() {
     setCart(cart.filter((_, i) => i !== index));
   };
 
+  const renderProductWarning = (productId: number) => {
+    const currentProduct = products.find((product) => product.id === productId);
+    if (!currentProduct || !isProductAvailable(currentProduct)) {
+      return (
+        <div className="px-4 pb-3 text-xs text-red-600">
+          Loại phế liệu này tạm ngưng thu mua, vui lòng chọn loại khác.
+        </div>
+      );
+    }
+
+    return null;
+  };
+
   return (
     <Section title="Thông tin phế liệu" className="rounded-lg pb-4">
       {cart.map((item, index) => (
@@ -61,7 +80,7 @@ export default function CartList() {
             <div className="text-sm font-medium whitespace-nowrap">Loại:</div>
             <div className="flex-1 flex justify-end">
               <Select
-                items={products}
+                items={availableProducts}
                 value={item.product}
                 onChange={(product) => {
                   if (product) handleUpdateProduct(index, product);
@@ -72,6 +91,7 @@ export default function CartList() {
               />
             </div>
           </div>
+          {renderProductWarning(item.product.id)}
           <HorizontalDivider />
           <div className="flex items-center px-4 pt-3 pb-3 space-x-4">
             <Icon icon="zi-check-circle" className="text-primary" />
@@ -101,11 +121,17 @@ export default function CartList() {
         <div className="text-sm font-medium whitespace-nowrap">Thời gian:</div>
         <input
           type="datetime-local"
+          min={getPickupTimeInputMin()}
           value={deliveryTime}
           onChange={(e) => setDeliveryTime(e.target.value)}
           className="text-sm text-right flex-1 focus:outline-none bg-transparent"
         />
       </div>
+      {deliveryTimeError && (
+        <div className="px-4 -mt-2 pb-3 text-xs text-red-600">
+          {deliveryTimeError}
+        </div>
+      )}
       <HorizontalDivider />
       <div className="flex items-center px-4 pt-3 pb-3 space-x-4">
         <Icon icon="zi-note" className="text-primary" />

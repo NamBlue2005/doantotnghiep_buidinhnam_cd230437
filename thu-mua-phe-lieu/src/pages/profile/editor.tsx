@@ -63,18 +63,7 @@ function ProfileEditorPage() {
           required
           defaultValue={userInfo?.phone}
         />
-        <Input
-          name="email"
-          label="Email"
-          placeholder="Email"
-          defaultValue={userInfo?.email}
-        />
-        <Input
-          name="address"
-          label="Địa chỉ"
-          placeholder="Nhập dịa chỉ"
-          defaultValue={userInfo?.address}
-        />
+    
       </div>
       <div className="p-6 pt-4 bg-section">
         <Button htmlType="submit" fullWidth>

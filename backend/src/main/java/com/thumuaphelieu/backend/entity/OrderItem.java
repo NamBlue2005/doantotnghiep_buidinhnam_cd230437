@@ -1,6 +1,8 @@
 package com.thumuaphelieu.backend.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import org.hibernate.annotations.NotFound;
+import org.hibernate.annotations.NotFoundAction;
 import jakarta.persistence.*;
 
 @Entity
@@ -16,12 +18,17 @@ public class OrderItem {
     @JsonIgnore
     private Order order;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "category_id", nullable = false)
-    private ScrapCategory category;
+    @ManyToOne(fetch = FetchType.EAGER) // EAGER để luôn tải thông tin sản phẩm
+    @JoinColumn(name = "product_id", nullable = false)
+    @NotFound(action = NotFoundAction.IGNORE) // Bỏ qua nếu không tìm thấy product, trả về null
+    private ScrapProduct product;
 
     @Column(nullable = false)
     private Double weight;
+
+    // Constructor rỗng là yêu cầu của JPA
+    public OrderItem() {
+    }
 
     public Long getId() {
         return id;
@@ -39,12 +46,12 @@ public class OrderItem {
         this.order = order;
     }
 
-    public ScrapCategory getCategory() {
-        return category;
+    public ScrapProduct getProduct() {
+        return product;
     }
 
-    public void setCategory(ScrapCategory category) {
-        this.category = category;
+    public void setProduct(ScrapProduct product) {
+        this.product = product;
     }
 
     public Double getWeight() {

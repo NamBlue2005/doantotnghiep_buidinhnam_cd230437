@@ -40,6 +40,7 @@ function OrderSummary(props: { order: any; full?: boolean }) {
         <CollapsibleOrderItems
           items={props.order.items}
           defaultExpanded={props.full}
+          originalStatus={props.order.originalStatus}
         />
       </div>
       <HorizontalDivider />
@@ -56,10 +57,18 @@ function OrderSummary(props: { order: any; full?: boolean }) {
       </div>
       <HorizontalDivider />
       <div className="flex justify-between items-center px-4 py-2 space-x-4">
-        <div className="text-xs">Khối lượng ước tính</div>
-        <div className="text-sm font-medium text-primary">
-          {Number(props.order.estimatedWeight).toLocaleString('en-US')} kg
-        </div>
+        {/* Hiển thị khối lượng thực tế nếu đơn đã hoàn thành, ngược lại hiển thị khối lượng ước tính */}
+        {props.order.originalStatus === 'COMPLETED' && props.order.actualWeight > 0 ? (
+          <>
+            <div className="text-xs">Khối lượng thực tế</div>
+            <div className="text-sm font-bold text-green-600">{Number(props.order.actualWeight).toLocaleString('en-US')} kg</div>
+          </>
+        ) : (
+          <>
+            <div className="text-xs">Khối lượng ước tính</div>
+            <div className="text-sm font-medium text-primary">{Number(props.order.estimatedWeight).toLocaleString('en-US')} kg</div>
+          </>
+        )}
       </div>
     </Section>
   );

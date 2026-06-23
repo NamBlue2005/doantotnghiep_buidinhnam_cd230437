@@ -29,12 +29,11 @@ public class Order {
     @NotFound(action = NotFoundAction.IGNORE)
     private User seller;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "category_id")
-    private ScrapCategory category;
-
     @Column(name = "estimated_weight", nullable = false)
     private Double estimatedWeight;
+
+    @Column(name = "actual_weight")
+    private Double actualWeight;
 
     @Column(nullable = false)
     private String address;
@@ -53,6 +52,9 @@ public class Order {
     @JoinColumn(name = "matched_driver_id")
     @NotFound(action = NotFoundAction.IGNORE)
     private User matchedDriver;
+
+    @Column(name = "amount")
+    private Double amount;
 
     @Column(name = "final_price")
     private Double finalPrice;
@@ -109,20 +111,20 @@ public class Order {
         this.seller = seller;
     }
 
-    public ScrapCategory getCategory() {
-        return category;
-    }
-
-    public void setCategory(ScrapCategory category) {
-        this.category = category;
-    }
-
     public Double getEstimatedWeight() {
         return estimatedWeight;
     }
 
     public void setEstimatedWeight(Double estimatedWeight) {
         this.estimatedWeight = estimatedWeight;
+    }
+
+    public Double getActualWeight() {
+        return actualWeight;
+    }
+
+    public void setActualWeight(Double actualWeight) {
+        this.actualWeight = actualWeight;
     }
 
     public String getAddress() {
@@ -163,6 +165,14 @@ public class Order {
 
     public void setMatchedDriver(User matchedDriver) {
         this.matchedDriver = matchedDriver;
+    }
+
+    public Double getAmount() {
+        return amount;
+    }
+
+    public void setAmount(Double amount) {
+        this.amount = amount;
     }
 
     public Double getFinalPrice() {

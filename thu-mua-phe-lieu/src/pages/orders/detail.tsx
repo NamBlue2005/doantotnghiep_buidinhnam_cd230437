@@ -24,9 +24,15 @@ function OrderDetailPage() {
   const [applying, setApplying] = useState(false);
   const [matching, setMatching] = useState(false);
   const [completing, setCompleting] = useState(false);
+  const [creatingQr, setCreatingQr] = useState(false);
+  const [paymentQrLink, setPaymentQrLink] = useState("");
+  const [paymentQrImage, setPaymentQrImage] = useState("");
   const [applications, setApplications] = useState<any[]>([]);
-  const [actualWeight, setActualWeight] = useState(order?.estimatedWeight || 0);
-  const [amount, setAmount] = useState((order?.estimatedWeight || 0) * 5000);
+  // State để quản lý khối lượng thực tế của từng loại phế liệu
+  const [editableOrderItems, setEditableOrderItems] = useState<Array<{ productId: number; name: string; actualWeight: number; }>>([]);
+  // State để quản lý tổng khối lượng và tổng tiền
+  const [totalActualWeight, setTotalActualWeight] = useState(order?.estimatedWeight || 0);
+  const [totalAmount, setTotalAmount] = useState((order?.estimatedWeight || 0) * 5000);
   const setOrderRefreshKey = useSetAtom(orderRefreshKeyState);
   const setNotificationRefreshKey = useSetAtom(notificationRefreshKeyState);
   const user = useAtomValue(userInfoState) as any;
@@ -35,6 +41,18 @@ function OrderDetailPage() {
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState("");
   const [submittingReview, setSubmittingReview] = useState(false);
+
+  // Khởi tạo state cho việc chỉnh sửa khối lượng khi component được tải
+  useEffect(() => {
+    if (order && order.items) {
+      const initialItems = order.items.map((item: any) => ({
+        productId: item.product.id, // Sử dụng productId
+        name: item.product.name.replace("Thu mua ", ""), // Chỉ lấy tên phế liệu, bỏ chữ "Thu mua"
+        actualWeight: item.quantity, // Ban đầu, khối lượng thực tế bằng khối lượng ước tính
+      }));
+      setEditableOrderItems(initialItems);
+    }
+  }, [order]);
 
   // Gọi API lấy danh sách tài xế ứng tuyển nếu là Người bán
   useEffect(() => {
@@ -64,7 +82,7 @@ function OrderDetailPage() {
       setCancelling(true);
       try {
         // Gọi API Hủy đơn
-        const response = await fetch(`${API_BASE_URL}/orders/${order.id}/cancel?sellerId=${user.id}`, {
+        const response = await fetch(`${API_BASE_URL}/orders/${order.id}/cancel?userId=${user.id}`, {
           method: "PUT",
           headers: {
             "ngrok-skip-browser-warning": "true",
@@ -199,22 +217,44 @@ function OrderDetailPage() {
     }
   };
 
-  // Hàm tự động tính tiền khi nhập số kg (Tạm tính 5.000đ / 1 kg)
-  const handleWeightChange = (e: any) => {
-    const weight = Number(e.target.value);
-    setActualWeight(weight);
-    setAmount(weight * 5000); 
+  // Hàm xử lý khi tài xế thay đổi khối lượng của một loại phế liệu
+  const handleIndividualWeightChange = (index: number, value: string) => {
+    const newWeight = Number(value);
+    if (isNaN(newWeight) || newWeight < 0) return;
+
+    const updatedItems = [...editableOrderItems];
+    updatedItems[index].actualWeight = newWeight;
+    setEditableOrderItems(updatedItems);
+
+    // Tự động tính lại tổng khối lượng và tổng tiền
+    const newTotalActualWeight = updatedItems.reduce((sum, item) => sum + item.actualWeight, 0);
+    setTotalActualWeight(newTotalActualWeight);
+    setTotalAmount(newTotalActualWeight * 5000); // Vẫn giữ cách tính tạm 5.000đ/kg
   };
 
   const handleCompleteOrder = async () => {
+    if (totalActualWeight <= 0 || totalAmount <= 0) {
+      toast.error("Khối lượng và thành tiền phải lớn hơn 0.");
+      return;
+    }
+
     if (window.confirm("Xác nhận bạn đã thu gom xong đơn hàng này?")) {
       setCompleting(true);
       try {
         const response = await fetch(`${API_BASE_URL}/orders/${order.id}/complete`, {
           method: "PUT",
           headers: {
+            "Content-Type": "application/json",
             "ngrok-skip-browser-warning": "true",
           },
+          body: JSON.stringify({
+            actualWeight: totalActualWeight,
+            amount: totalAmount,
+            items: editableOrderItems.map(item => ({ // Gửi kèm khối lượng thực tế của từng loại
+              productId: item.productId, // Gửi productId thay vì categoryId
+              actualWeight: item.actualWeight
+            })),
+          }),
         });
         
         if (response.ok) {
@@ -235,7 +275,12 @@ function OrderDetailPage() {
   };
 
   const handleZaloPay = async () => {
-    setCompleting(true);
+    if (totalActualWeight <= 0 || totalAmount <= 0) {
+      toast.error("Khối lượng và thành tiền phải lớn hơn 0.");
+      return;
+    }
+
+    setCreatingQr(true);
     try {
       const response = await fetch(`${API_BASE_URL}/payments/create`, {
         method: "POST",
@@ -243,15 +288,23 @@ function OrderDetailPage() {
           "Content-Type": "application/json",
           "ngrok-skip-browser-warning": "true",
         },
-        body: JSON.stringify({ orderId: order.id, amount: amount }),
+        body: JSON.stringify({
+          orderId: order.id,
+          amount: totalAmount,
+          actualWeight: totalActualWeight, // Gửi kèm tổng khối lượng thực tế
+          items: editableOrderItems.map(item => ({ // Gửi kèm khối lượng thực tế của từng loại
+            productId: item.productId, // Gửi productId thay vì categoryId
+            actualWeight: item.actualWeight
+          })),
+        }),
       });
       
       if (response.ok) {
         const url = await response.text();
-        // Sử dụng API chuẩn của Zalo Mini App để mở link thanh toán trên điện thoại
-        openWebview({
-          url: url
-        });
+        setPaymentQrLink(url);
+        setPaymentQrImage(
+          `https://api.qrserver.com/v1/create-qr-code/?size=360x360&margin=0&data=${encodeURIComponent(url)}`
+        );
       } else {
         toast.error("Không thể tạo giao dịch ZaloPay!");
       }
@@ -259,7 +312,7 @@ function OrderDetailPage() {
       console.error(error);
       toast.error("Lỗi kết nối đến máy chủ.");
     } finally {
-      setCompleting(false);
+      setCreatingQr(false);
     }
   };
 
@@ -340,7 +393,7 @@ function OrderDetailPage() {
                   <Icon icon="zi-chat" size={20} />
                 </Button>
                 {/* TÀI XẾ SẼ THẤY THÊM NÚT CHỈ ĐƯỜNG ĐẾN CHỖ NGƯỜI BÁN */}
-                {user?.role === 2 && order.latitude && order.longitude && order.latitude !== 0 && (
+                {user?.role === 2 && Boolean(order.latitude && order.longitude && order.latitude !== 0) && (
                   <Button 
                     size="small"
                     variant="secondary"
@@ -436,31 +489,84 @@ function OrderDetailPage() {
       {/* Nút Hoàn thành dành cho Tài xế khi đơn đang giao */}
       {order.status === "shipping" && user?.role === 2 && (
         <div className="flex-none p-4 bg-section border-t border-black/10 space-y-3">
-          <div className="flex items-center gap-2">
-            <Input
-              label="Khối lượng (Kg)"
-              type="number"
-              value={actualWeight}
-              onChange={handleWeightChange}
-            />
+          {/* Phần nhập khối lượng có thể cuộn để không che màn hình */}
+          <div className="font-medium text-sm text-gray-800">Cập nhật khối lượng thực tế</div>
+          <div className="max-h-[150px] overflow-y-auto space-y-2 pr-2">
+              {editableOrderItems.map((item, index) => (
+                <Input
+                  key={item.productId}
+                  label={`KL ${item.name} (Kg)`}
+                  type="number"
+                  value={item.actualWeight}
+                  onChange={(e) => handleIndividualWeightChange(index, e.target.value)}
+                />
+              ))}
+          </div>
+          <div className="flex items-center gap-2 pt-2">
             <Input
               label="Thành tiền (VNĐ)"
               type="number"
-              value={amount}
-              onChange={(e) => setAmount(Number(e.target.value))}
+              value={totalAmount}
+              readOnly // Tài xế không thể sửa trực tiếp, sẽ tự động tính
+              className="flex-1"
             />
           </div>
           <div className="flex gap-2 pb-2 border-b border-black/10">
             <Button variant="secondary" fullWidth disabled={completing || cancelling} onClick={handleCompleteOrder}>
               Tiền mặt
             </Button>
-            <Button fullWidth disabled={completing || cancelling} onClick={handleZaloPay}>
-              ZaloPay
+            <Button fullWidth disabled={creatingQr || completing || cancelling} onClick={handleZaloPay}>
+              Mã QR
             </Button>
           </div>
           <Button variant="secondary" type="danger" fullWidth disabled={completing || cancelling} onClick={handleCancelOrder}>
             Tài xế hủy đơn
           </Button>
+        </div>
+      )}
+
+      {(paymentQrLink || creatingQr) && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-sm rounded-2xl bg-white p-4 shadow-xl">
+            <div className="flex items-center justify-between mb-3">
+              <div className="font-bold text-primary">Mã QR thanh toán</div>
+              <button
+                className="p-2 text-gray-500"
+                onClick={() => {
+                  setPaymentQrLink("");
+                  setPaymentQrImage("");
+                }}
+              >
+                <Icon icon="zi-close" size={20} />
+              </button>
+            </div>
+
+            {creatingQr && !paymentQrImage ? (
+              <div className="flex h-72 items-center justify-center rounded-xl bg-gray-50 text-sm text-gray-500">
+                Đang tạo mã QR...
+              </div>
+            ) : (
+              <div className="flex flex-col items-center gap-3">
+                <img
+                  src={paymentQrImage}
+                  alt="QR thanh toán"
+                  className="w-full max-w-[320px] rounded-xl border border-gray-200"
+                />
+                <div className="text-center text-xs text-gray-600">
+                  Quét mã QR bằng ứng dụng ngân hàng hoặc ví điện tử để thanh toán.
+                </div>
+                <button
+                  className="text-xs font-medium text-primary underline"
+                  onClick={() => {
+                    setPaymentQrLink("");
+                    setPaymentQrImage("");
+                  }}
+                >
+                  Đóng
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>

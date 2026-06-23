@@ -68,7 +68,7 @@ function OrderList(props: { ordersState: Atom<Promise<any[]>> }) {
         style={{ height: pullDistance > 0 || refreshing ? '40px' : '0px', opacity: refreshing ? 1 : pullDistance / 60 }}
       >
         {refreshing ? (
-          <div className="flex items-center space-x-2"><Icon icon="zi-spinner" className="animate-spin" /><span className="text-xs font-medium">Đang tải lại...</span></div>
+          <div className="flex items-center space-x-2"><Icon icon={"zi-spinner" as any} className="animate-spin" /><span className="text-xs font-medium">Đang tải lại...</span></div>
         ) : (
           <div className="flex items-center space-x-2"><Icon icon="zi-arrow-down" /><span className="text-xs font-medium">Kéo xuống để tải lại</span></div>
         )}

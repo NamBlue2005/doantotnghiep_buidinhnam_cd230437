@@ -1,0 +1,39 @@
+@startuml
+title 2.3.3. Luồng quy trình quản lý danh mục phế liệu (Quản trị viên - Admin)
+
+start
+
+partition "Admin" {
+  :Đăng nhập thành công vào hệ thống quản trị Backend;
+  :Truy cập phân hệ "Quản lý danh mục phế liệu";
+}
+
+partition "Hệ thống" {
+  :Tải danh sách danh mục phế liệu hiện tại;
+}
+
+partition "Admin" {
+  :Chọn thao tác Thêm mới / Cập nhật / Xóa danh mục;
+  :Nhập hoặc sửa thông tin;
+  :Tên loại phế liệu;
+  :Đơn giá/kg;
+  :Hình ảnh;
+  :Bấm "Lưu";
+}
+
+partition "Backend" {
+  if (Dữ liệu hợp lệ?) then (No)
+    :Báo lỗi dữ liệu không hợp lệ;
+    :Quay lại bước nhập/sửa thông tin;
+  else (Yes)
+    :Lưu thông tin vào CSDL MySQL;
+  endif
+}
+
+partition "Hệ thống" {
+  :Đồng bộ giá mới xuống giao diện Zalo Mini App của khách hàng;
+}
+
+stop
+
+@enduml

@@ -137,14 +137,14 @@ export const phoneState = atom(async () => {
     // phone = await decodeToken(token);
 
     // Các bước bên dưới để demo chức năng, phía tích hợp có thể bỏ đi sau.
-    toast(
-      "Đã lấy được token chứa số điện thoại người dùng. Phía tích hợp cần decode token này ở server. Giả lập số điện thoại 0912345678...",
-      {
-        icon: "ℹ",
-        duration: 10000,
-      }
-    );
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    // toast(
+    //   "Đã lấy được token chứa số điện thoại người dùng. Phía tích hợp cần decode token này ở server. Giả lập số điện thoại 0912345678...",
+    //   {
+    //     icon: "ℹ",
+    //     duration: 10000,
+    //   }
+    // );
+    // await new Promise((resolve) => setTimeout(resolve, 1000));
     phone = "0912345678";
     // End demo
   } catch (error) {
@@ -162,16 +162,28 @@ export const tabsState = atom(["Tất cả", "Nam", "Nữ", "Trẻ em"]);
 export const selectedTabIndexState = atom(0);
 
 export const categoriesState = atom(async () => {
-  return [
-    { id: 1, name: "Giấy/Carton", icon: "https://cdn-icons-png.flaticon.com/512/2910/2910777.png" },
-    { id: 2, name: "Nhựa", icon: "https://cdn-icons-png.flaticon.com/512/3061/3061108.png" },
-    { id: 3, name: "Sắt/Thép", icon: "https://cdn-icons-png.flaticon.com/512/2910/2910795.png" },
-    { id: 4, name: "Nhôm/Đồng", icon: "https://cdn-icons-png.flaticon.com/512/2910/2910787.png" },
-    { id: 1, name: "Giấy/Carton", image: "https://cdn-icons-png.flaticon.com/512/2910/2910777.png" },
-    { id: 2, name: "Nhựa", image: "https://cdn-icons-png.flaticon.com/512/3061/3061108.png" },
-    { id: 3, name: "Sắt/Thép", image: "https://cdn-icons-png.flaticon.com/512/2910/2910795.png" },
-    { id: 4, name: "Nhôm/Đồng", image: "https://cdn-icons-png.flaticon.com/512/2910/2910787.png" },
-  ] as Category[];
+  try {
+    const response = await fetch(`${API_BASE_URL}/categories`, {
+      headers: { "ngrok-skip-browser-warning": "true" },
+      cache: "no-store"
+    });
+    if (!response.ok) {
+      console.error("Lỗi tải danh mục từ Backend");
+      return [];
+    }
+    const categories = await response.json();
+    if (!Array.isArray(categories)) {
+      return [];
+    }
+    // Map `imageUrl` từ backend sang `icon` để tương thích với giao diện
+    return categories.map((cat: any) => ({
+      ...cat,
+      icon: cat.imageUrl
+    }));
+  } catch (error) {
+    console.error("Lỗi kết nối khi tải danh mục:", error);
+    return [];
+  }
 });
 
 export const categoriesStateUpwrapped = unwrap(
@@ -180,25 +192,26 @@ export const categoriesStateUpwrapped = unwrap(
 );
 
 export const productsState = atom(async (get) => {
-  const categories = await get(categoriesState);
-  const products = [
-    { id: 1, categoryId: 1, name: "Giấy báo", price: 4000, image: "", detail: "Thu mua giấy báo cũ" },
-    { id: 2, categoryId: 1, name: "Vỏ hộp giấy", price: 3000, image: "", detail: "Vỏ hộp giấy, bao bì" },
-    { id: 3, categoryId: 1, name: "Giấy hồ sơ", price: 4500, image: "", detail: "Giấy A4, hồ sơ văn phòng" },
-    { id: 4, categoryId: 1, name: "Giấy thùng", price: 3500, image: "", detail: "Thùng carton các loại" },
-    { id: 5, categoryId: 3, name: "Sắt đặc", price: 10000, image: "", detail: "Sắt công trình, sắt đặc" },
-    { id: 6, categoryId: 3, name: "Sắt tôn", price: 8000, image: "", detail: "Tôn cũ, phế liệu tôn" },
-    { id: 7, categoryId: 2, name: "Chai PET", price: 5000, image: "", detail: "Chai nhựa trong suốt" },
-    { id: 8, categoryId: 4, name: "Lon nhôm", price: 12000, image: "", detail: "Vỏ lon nước ngọt, bia" },
-    { id: 9, categoryId: 4, name: "Đồng thau", price: 40000, image: "", detail: "Đồng phế liệu, đồng thau" },
-    { id: 10, categoryId: 4, name: "Nhôm cửa/ Thanh", price: 15000, image: "", detail: "Nhôm thanh, cửa nhôm cũ" },
-  ] as (Product & { categoryId: number })[];
-  return products.map((product) => ({
-    ...product,
-    category: categories.find(
-      (category) => category.id === product.categoryId
-    )!,
-  }));
+  try {
+    const response = await fetch(`${API_BASE_URL}/scrap-products`, {
+      headers: { "ngrok-skip-browser-warning": "true" },
+      cache: "no-store"
+    });
+    if (!response.ok) {
+      console.error("Lỗi tải danh sách sản phẩm từ Backend");
+      return [];
+    }
+    const products = await response.json();
+    if (!Array.isArray(products)) return [];
+    // Map lại dữ liệu để tương thích với các component khác
+    return products.map((p: any) => ({
+      ...p,
+      categoryId: p.category?.id // Thêm categoryId để bộ lọc hoạt động
+    }));
+  } catch (error) {
+    console.error("Lỗi kết nối khi tải sản phẩm:", error);
+    return [];
+  }
 });
 
 export const flashSaleProductsState = atom((get) => get(productsState));
@@ -360,9 +373,11 @@ export const userStatsState = atom(async (get) => {
       let totalWeight = 0;
       let totalRevenue = 0;
       completedOrders.forEach((order: any) => {
-        const weight = order.actualWeight || order.estimatedWeight || 0;
-        totalWeight += weight;
-        totalRevenue += order.amount || order.totalAmount || (weight * 5000);
+        // Ưu tiên dùng khối lượng thực tế để thống kê
+        totalWeight += order.actualWeight || order.estimatedWeight || 0;
+        
+        // Sửa lỗi: Dùng `!= null` để xử lý đúng trường hợp `amount` là 0, tránh tính lại theo giá tạm tính
+        totalRevenue += order.amount != null ? order.amount : (order.totalAmount || 0);
       });
       return { totalOrders: completedOrders.length, totalWeight, totalRevenue };
     }
@@ -405,22 +420,37 @@ export const ordersState = atomFamily((status: OrderStatus) =>
       }
 
       // 2. Format lại dữ liệu Backend để giao diện cũ không bị sập (Crash)
-      const mappedOrders = realOrders.map((order: any) => ({
-        ...order,
-        originalStatus: order.status, // Giữ lại trạng thái gốc (CANCELLED)
-        // Map trạng thái Backend -> Frontend để các Tab hiển thị đúng
-        status: (order.status === 'PENDING' || order.status === 'HAS_OFFERS') ? 'pending' : (order.status === 'COMPLETED' || order.status === 'CANCELLED' ? 'completed' : 'shipping'),
-        // Tạo mảng items giả lập để component Danh sách không bị lỗi undefined
-        items: order.items && order.items.length > 0 ? order.items.map((oi: any) => ({
-          product: {
-            name: `Thu mua ${oi.category?.name || 'Phế liệu'}`,
-            price: 0,
-            image: order.imageUrl || "https://img.freepik.com/free-vector/recycle-symbol_1284-43093.jpg"
-          },
-          quantity: oi.weight
-        })) : [{ product: { name: `Thu mua ${order.category?.name || 'Phế liệu'}`, price: 0, image: order.imageUrl || "https://img.freepik.com/free-vector/recycle-symbol_1284-43093.jpg" }, quantity: order.estimatedWeight }],
-        total: 0
-      }));
+      const mappedOrders = realOrders.map((order: any) => {
+        const finalAmount = order.amount || order.totalAmount || 0;
+
+        // Lọc ra các item hợp lệ (có product không bị null)
+        const validItems = order.items ? order.items.filter((item: any) => item.product) : [];
+
+        const mappedItems = validItems.length > 0
+          ? validItems.map((orderItem: any) => ({
+              product: {
+                id: orderItem.product.id, // Lấy ID sản phẩm
+                name: `Thu mua ${orderItem.product.name || 'Phế liệu'}`, // Lấy tên sản phẩm
+                price: orderItem.product.price || 0, // Lấy giá sản phẩm
+                image: orderItem.product.imageUrl || order.imageUrl || "https://img.freepik.com/free-vector/recycle-symbol_1284-43093.jpg",
+                categoryId: orderItem.product.category?.id // Lấy categoryId từ product
+              },
+              quantity: orderItem.weight // Đây là khối lượng của từng loại
+            }))
+          : [{ // Fallback cho các đơn hàng cũ (không có item nào hợp lệ)
+              product: { id: 0, name: `Thu mua Phế liệu`, price: 0, image: order.imageUrl || "https://img.freepik.com/free-vector/recycle-symbol_1284-43093.jpg", categoryId: 0 },
+              quantity: order.actualWeight || order.estimatedWeight
+            }];
+
+        return {
+          ...order,
+          originalStatus: order.status, // Giữ lại trạng thái gốc (CANCELLED)
+          // Map trạng thái Backend -> Frontend để các Tab hiển thị đúng
+          status: (order.status === 'PENDING' || order.status === 'HAS_OFFERS') ? 'pending' : (order.status === 'COMPLETED' || order.status === 'CANCELLED' ? 'completed' : 'shipping'),
+          items: mappedItems,
+          total: finalAmount
+        };
+      });
 
       return mappedOrders.filter((order: any) => order.status === status);
     } catch (error) {
@@ -444,20 +474,31 @@ export const availableOrdersState = atom(async (get) => {
       return [];
     }
 
-    const mappedOrders = realOrders.map((order: any) => ({
-      ...order,
-      originalStatus: order.status,
-      status: 'pending', // Các đơn available đều đang ở trạng thái chờ
-      items: order.items && order.items.length > 0 ? order.items.map((oi: any) => ({
-        product: {
-          name: `Thu mua ${oi.category?.name || 'Phế liệu'}`,
-          price: 0,
-          image: order.imageUrl || "https://img.freepik.com/free-vector/recycle-symbol_1284-43093.jpg"
-        },
-        quantity: oi.weight
-      })) : [{ product: { name: `Thu mua ${order.category?.name || 'Phế liệu'}`, price: 0, image: order.imageUrl || "https://img.freepik.com/free-vector/recycle-symbol_1284-43093.jpg" }, quantity: order.estimatedWeight }],
-      total: 0
-    }));
+    // Tái sử dụng logic map của ordersState để đảm bảo tính nhất quán
+    const mappedOrders = realOrders.map((order: any) => {
+      const validItems = order.items ? order.items.filter((item: any) => item.product) : [];
+
+      const mappedItems = validItems.length > 0
+        ? validItems.map((orderItem: any) => ({
+            product: {
+              id: orderItem.product.id,
+              name: `Thu mua ${orderItem.product.name || 'Phế liệu'}`,
+              price: orderItem.product.price || 0,
+              image: orderItem.product.imageUrl || order.imageUrl || "https://img.freepik.com/free-vector/recycle-symbol_1284-43093.jpg",
+              categoryId: orderItem.product.category?.id
+            },
+            quantity: orderItem.weight
+          }))
+        : [{ product: { id: 0, name: `Thu mua Phế liệu`, price: 0, image: order.imageUrl || "https://img.freepik.com/free-vector/recycle-symbol_1284-43093.jpg", categoryId: 0 }, quantity: order.estimatedWeight }];
+
+      return {
+        ...order,
+        originalStatus: order.status,
+        status: 'pending', // Các đơn available đều đang ở trạng thái chờ
+        items: mappedItems,
+        total: 0
+      };
+    });
     return mappedOrders;
   } catch (error) {
     console.error("❌ Lỗi khi lấy đơn hàng cho tài xế:", error);

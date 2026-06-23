@@ -20,6 +20,8 @@ import org.springframework.util.MultiValueMap;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Date;
 import java.util.UUID;
 import java.util.Map;
@@ -38,9 +40,24 @@ public class ZaloPayService {
 
     // 1. Tạo yêu cầu thanh toán (Lưu db và trả về Link ZaloPay)
     @Transactional
-    public String createPayment(Long orderId, Double amount) {
+    public String createPayment(Long orderId, Double amount, Double actualWeight, List<Map<String, Object>> itemUpdates) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng: " + orderId));
+
+        // Cập nhật tổng khối lượng và tổng số tiền vào đơn hàng
+        order.setActualWeight(actualWeight);
+        order.setAmount(amount);
+
+        // Cập nhật khối lượng thực tế cho từng OrderItem
+        for (Map<String, Object> itemUpdate : itemUpdates) {
+            Long productId = Long.valueOf(itemUpdate.get("productId").toString());
+            Double itemActualWeight = Double.valueOf(itemUpdate.get("actualWeight").toString());
+            order.getItems().stream()
+                 .filter(oi -> oi.getProduct() != null && oi.getProduct().getId().equals(productId))
+                 .findFirst()
+                 .ifPresent(oi -> oi.setWeight(itemActualWeight));
+        }
+        orderRepository.save(order);
 
         // Tạo mã giao dịch duy nhất cho hệ thống theo format: YYMMDD_UUID
         String transId = new SimpleDateFormat("yyMMdd").format(new Date()) + "_" + UUID.randomUUID().toString().substring(0, 8);
@@ -119,10 +136,20 @@ public class ZaloPayService {
         Transaction transaction = transactionRepository.findByAppTransId(appTransId)
                 .orElseThrow(() -> new RuntimeException("Giao dịch không tồn tại: " + appTransId));
 
+        // Lấy ID đơn hàng từ giao dịch để tải lại, tránh dùng dữ liệu cũ (stale)
+        Long orderId = transaction.getOrder().getId();
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng liên quan: " + orderId));
+
         transaction.setStatus(TransactionStatus.SUCCESS);
         transaction.setZpTransId(zpTransId);
-        transaction.getOrder().setStatus(OrderStatus.COMPLETED); // Đổi trạng thái đơn hàng thành Hoàn Thành
-
         transactionRepository.save(transaction);
+
+        // Chỉ cập nhật trạng thái đơn hàng nếu nó chưa được hoàn thành trước đó (ví dụ: bằng tiền mặt)
+        if (order.getStatus() != OrderStatus.COMPLETED) {
+            order.setStatus(OrderStatus.COMPLETED);
+            order.setCompletedAt(LocalDateTime.now());
+            orderRepository.save(order);
+        }
     }
 }

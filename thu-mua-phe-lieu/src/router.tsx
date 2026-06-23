@@ -1,9 +1,11 @@
 import Layout from "@/components/layout";
 import CartPage from "@/pages/cart";
-import ProductDetailPage from "@/pages/catalog/product-detail";
 import HomePage from "@/pages/home";
 import ProfilePage from "@/pages/profile";
+import { useAtomValue } from "jotai";
+import { useEffect } from "react";
 import { createBrowserRouter } from "react-router-dom";
+import { Navigate } from "react-router-dom";
 import { getBasePath } from "@/utils/zma";
 import OrdersPage from "./pages/orders";
 import ShippingAddressPage from "./pages/cart/shipping-address";
@@ -13,6 +15,24 @@ import DriverHomePage from "./pages/driver";
 import NotificationsPage from "./pages/notifications";
 import StatsPage from "./pages/stats";
 import AdminPage from "./pages/admin";
+import { userInfoState } from "@/state";
+import toast from "react-hot-toast";
+
+function SellerOnlyRoute(props: { children: JSX.Element }) {
+  const user = useAtomValue(userInfoState) as any;
+
+  useEffect(() => {
+    if (user && user.role !== 1) {
+      toast.error("Chỉ người bán mới được đăng đơn thu mua.");
+    }
+  }, [user?.role]);
+
+  if (user && user.role !== 1) {
+    return <Navigate to="/" replace />;
+  }
+
+  return props.children;
+}
 
 const router = createBrowserRouter(
   [
@@ -37,7 +57,11 @@ const router = createBrowserRouter(
         },
         {
           path: "/sell",
-          element: <CartPage />, // Tạm trỏ nút Tôi bán vào trang Tạo đơn
+          element: (
+            <SellerOnlyRoute>
+              <CartPage />
+            </SellerOnlyRoute>
+          ),
           handle: {
             title: "Tôi bán",
             backRoute: "/",
@@ -66,7 +90,11 @@ const router = createBrowserRouter(
         },
         {
           path: "/cart",
-          element: <CartPage />,
+          element: (
+            <SellerOnlyRoute>
+              <CartPage />
+            </SellerOnlyRoute>
+          ),
           handle: {
             title: "Tạo đơn thu mua",
             backRoute: "/",
@@ -95,14 +123,6 @@ const router = createBrowserRouter(
           handle: {
             title: "Thông tin tài khoản",
             noFooter: true,
-            noFloatingCart: true,
-          },
-        },
-        {
-          path: "/product/:id",
-          element: <ProductDetailPage />,
-          handle: {
-            scrollRestoration: 0, // when user selects another product in related products, scroll to the top of the page
             noFloatingCart: true,
           },
         },

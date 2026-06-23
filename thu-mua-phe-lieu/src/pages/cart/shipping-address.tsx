@@ -6,6 +6,12 @@ import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import { Button, Icon, Input, List, Radio } from "zmp-ui";
 import { getSetting, authorize } from "zmp-sdk/apis";
+import {
+  isSupportedAddressText,
+  isValidAddressText,
+  isValidPhoneNumber,
+  isWithinSupportedArea,
+} from "@/utils/order-validation";
 
 function ShippingAddressPage() {
   const [selectedAddress, setSelectedAddress] = useAtom(shippingAddressState);
@@ -20,6 +26,35 @@ function ShippingAddressPage() {
   const handleSaveNewAddress = (e: any) => {
     e.preventDefault();
     const data = new FormData(e.currentTarget);
+    const addressValue = String(data.get("address") || "").trim();
+    const phoneValue = String(data.get("phone") || "").trim();
+    const nameValue = String(data.get("name") || "").trim();
+
+    if (!isValidAddressText(addressValue)) {
+      toast.error("Vui lòng nhập địa chỉ khả dụng.");
+      return;
+    }
+
+    if (!nameValue) {
+      toast.error("Vui lòng nhập tên người nhận.");
+      return;
+    }
+
+    if (!isValidPhoneNumber(phoneValue)) {
+      toast.error("Số điện thoại không hợp lệ.");
+      return;
+    }
+
+    if (tempLocation && !isWithinSupportedArea(tempLocation)) {
+      toast.error("Địa chỉ nằm ngoài khu vực hỗ trợ. Vui lòng nhập địa chỉ khả dụng.");
+      return;
+    }
+
+    if (!tempLocation && !isSupportedAddressText(addressValue)) {
+      toast.error("Vui lòng nhập địa chỉ khả dụng trong khu vực hỗ trợ.");
+      return;
+    }
+
     const newAddress: any = { id: Date.now().toString() };
     data.forEach((value, key) => {
       newAddress[key] = value;
@@ -77,6 +112,12 @@ function ShippingAddressPage() {
             const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&addressdetails=1&accept-language=vi`);
             const data = await res.json();
             if (data && data.display_name) {
+              if (!isSupportedAddressText(data.display_name) && !isWithinSupportedArea({ lat: latitude, lng: longitude })) {
+                toast.error("Địa chỉ này nằm ngoài khu vực hỗ trợ. Vui lòng chọn địa chỉ khác.");
+                setTempLocation(null);
+                setAddressInput("");
+                return;
+              }
               setAddressInput(data.display_name.replace(", Việt Nam", "")); // Bỏ chữ Việt Nam cho ngắn gọn
               toast.success("Đã tìm thấy vị trí của bạn!");
             }
@@ -173,6 +214,9 @@ function ShippingAddressPage() {
                 label="Số điện thoại"
                 placeholder="0912345678"
                 defaultValue={userInfo?.phone}
+                required
+                inputMode="tel"
+                pattern="^(0\\d{9}|\\+84\\d{9})$"
               />
             </div>
             {savedAddresses.length > 0 && (
