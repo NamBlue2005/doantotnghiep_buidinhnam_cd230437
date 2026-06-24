@@ -141,7 +141,7 @@ export default function AdminPage() {
             </div>
           </Tabs.Tab>
 
-          <Tabs.Tab key="categories" label="Sản phẩm">
+          <Tabs.Tab key="categories" label="Danh mục">
             <CategoryManager />
           </Tabs.Tab>
 
@@ -152,7 +152,12 @@ export default function AdminPage() {
                   <List.Item
                     key={u.id}
                     title={u.fullName || "Người dùng ẩn danh"}
-                    subTitle={u.phone || "Chưa có số điện thoại"}
+                    subTitle={
+                      (<div className="space-y-0.5">
+                        <div>{u.phone || "Chưa có số điện thoại"}</div>
+                        <div className="text-gray-400 text-xs">ID: {String(u.id).padStart(10, '0')}</div>
+                      </div>) as any
+                    }
                     prefix={<img src={u.avatarUrl || "https://ui-avatars.com/api/?name=User"} className="w-10 h-10 rounded-full border border-gray-200" />}
                   >
                     <div className="flex items-center gap-2 mt-2">

@@ -1,7 +1,7 @@
 import { Button } from "zmp-ui";
 import { useState } from "react";
-import { useAtomValue, useSetAtom } from "jotai";
-import { API_BASE_URL, cartState, shippingAddressState, userInfoState, orderRefreshKeyState, deliveryTimeState, notificationRefreshKeyState } from "@/state";
+import { useAtom, useAtomValue, useSetAtom } from "jotai";
+import { API_BASE_URL, cartState, shippingAddressState, userInfoState, orderRefreshKeyState, deliveryTimeState, notificationRefreshKeyState, orderNoteState } from "@/state";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import {
@@ -14,6 +14,7 @@ import {
 export default function Pay() {
   const [paying, setPaying] = useState(false);
   const cart = useAtomValue(cartState);
+  const [note, setNote] = useAtom(orderNoteState);
   const address = useAtomValue(shippingAddressState);
   const setCart = useSetAtom(cartState);
   const setOrderRefreshKey = useSetAtom(orderRefreshKeyState);
@@ -92,12 +93,14 @@ export default function Pay() {
           latitude: address.lat || 0.0, // Truyền tọa độ thật đã lưu vào Backend
           longitude: address.lng || 0.0,
           imageUrl: "",
+          note: note,
           pickupTime: deliveryTime.length === 16 ? `${deliveryTime}:00` : deliveryTime, // Thêm :00 để Spring Boot không bị lỗi parse thời gian
         }),
       });
 
       if (response.ok) {
         toast.success("Đăng đơn thu mua thành công!");
+        setNote(""); // Xóa ghi chú sau khi đăng đơn
         setCart([]); // Xóa rỗng giỏ hàng
         setOrderRefreshKey((prev) => prev + 1); // Kích hoạt tải lại danh sách đơn hàng
         setNotificationRefreshKey((prev) => prev + 1); // Cập nhật lại thông báo ngay lập tức

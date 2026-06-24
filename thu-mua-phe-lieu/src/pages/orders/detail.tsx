@@ -1,4 +1,5 @@
 import { useLocation, useNavigate } from "react-router-dom";
+
 import OrderSummary from "./order-summary";
 import OrderInfo from "./order-info";
 import { Button, Input, Icon } from "zmp-ui";
@@ -356,8 +357,6 @@ function OrderDetailPage() {
     <div className="w-full h-full flex flex-col">
       <div className="flex-1 p-4 space-y-2 overflow-y-auto">
         <OrderInfo order={order} />
-        <OrderSummary full order={order} />
-        
         {/* Thông tin liên hệ (Chỉ hiển thị khi đơn đang giao hoặc đã hoàn thành) */}
         {(order.status === "shipping" || order.status === "completed") && (
           <div className="bg-white rounded-lg p-4 border-[0.5px] border-black/10 mt-4 space-y-3 shadow-sm">
@@ -475,7 +474,7 @@ function OrderDetailPage() {
       
       {order.status === "pending" && user?.role === 2 && (
         <div className="flex-none p-4 bg-section border-t border-black/10 space-y-3">
-          {order.latitude && order.longitude && order.latitude !== 0 && (
+          {Boolean(order.latitude && order.longitude && order.latitude !== 0) && (
             <Button fullWidth variant="secondary" onClick={() => openWebview({ url: `https://www.google.com/maps/search/?api=1&query=${order.latitude},${order.longitude}` })}>
               Xem vị trí trên bản đồ
             </Button>

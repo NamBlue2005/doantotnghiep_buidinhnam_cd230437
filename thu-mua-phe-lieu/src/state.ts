@@ -321,6 +321,8 @@ export const savedAddressesState = atomWithStorage<ShippingAddress[]>(
 
 export const deliveryTimeState = atom<string>("");
 
+export const orderNoteState = atom<string>("");
+
 export const orderRefreshKeyState = atom(0);
 
 export const notificationRefreshKeyState = atom(0);
@@ -448,11 +450,15 @@ export const ordersState = atomFamily((status: OrderStatus) =>
           // Map trạng thái Backend -> Frontend để các Tab hiển thị đúng
           status: (order.status === 'PENDING' || order.status === 'HAS_OFFERS') ? 'pending' : (order.status === 'COMPLETED' || order.status === 'CANCELLED' ? 'completed' : 'shipping'),
           items: mappedItems,
+          note: order.note, // Đảm bảo trường ghi chú được truyền qua
           total: finalAmount
         };
       });
 
-      return mappedOrders.filter((order: any) => order.status === status);
+      // Sắp xếp các đơn hàng, đơn mới nhất sẽ lên trên cùng
+      const sortedOrders = mappedOrders.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+      return sortedOrders.filter((order: any) => order.status === status);
     } catch (error) {
       console.error("❌ Lỗi khi kết nối Backend:", error);
       return [];
@@ -495,11 +501,14 @@ export const availableOrdersState = atom(async (get) => {
         ...order,
         originalStatus: order.status,
         status: 'pending', // Các đơn available đều đang ở trạng thái chờ
+        note: order.note, // Đảm bảo trường ghi chú được truyền qua
         items: mappedItems,
         total: 0
       };
     });
-    return mappedOrders;
+    // Sắp xếp các đơn hàng, đơn mới nhất sẽ lên trên cùng
+    const sortedOrders = mappedOrders.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    return sortedOrders;
   } catch (error) {
     console.error("❌ Lỗi khi lấy đơn hàng cho tài xế:", error);
     return [];

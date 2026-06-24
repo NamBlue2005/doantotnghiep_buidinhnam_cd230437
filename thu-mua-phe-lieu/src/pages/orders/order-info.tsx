@@ -4,18 +4,30 @@ import DeliverySummary from "../cart/delivery-summary";
 import { openWebview } from "zmp-sdk/apis";
 import { useAtomValue } from "jotai";
 import { userInfoState } from "@/state";
+import CollapsibleOrderItems from "./collapsible-order-items";
 
 function OrderInfo(props: { order: any }) {
   const user = useAtomValue(userInfoState) as any;
 
-  // Ưu tiên dùng text địa chỉ (có số nhà cụ thể) để Google Maps cắm mốc chính xác 100%
-  const mapQuery = props.order.address 
+  
+  const mapQuery = props.order.address
     ? encodeURIComponent(props.order.address)
     : `${props.order.latitude},${props.order.longitude}`;
 
+  // Backend có thể trả về dưới nhiều tên field khác nhau (note / notes / sellerNote / description).
+  // Lấy field nào có giá trị trước, đồng thời trim để loại bỏ chuỗi chỉ chứa khoảng trắng.
+  const noteText: string = (
+    props.order.note ??
+    props.order.notes ??
+    props.order.sellerNote ??
+    props.order.description ??
+    ""
+  ).toString().trim();
+
   return (
-    <List noSpacing className="bg-section rounded-lg">
-      <List.Item prefix={<Icon icon="zi-note" />} title="Mã đơn hàng">
+    <div className="bg-section rounded-lg overflow-hidden">
+      <List noSpacing>
+        <List.Item prefix={<Icon icon="zi-note" />} title="Mã đơn hàng">
         <span className="text-sm font-bold text-primary">{props.order.orderCode || `OD${String(props.order.id).padStart(8, '0')}`}</span>
       </List.Item>
 
@@ -25,25 +37,26 @@ function OrderInfo(props: { order: any }) {
         subtitle="Thông tin vị trí"
         description={props.order.address}
       />
-      
+
       {/* Bản đồ Google Maps thu nhỏ (Mini Map) */}
       {user?.role === 2 && (
-        <div className="px-4 pb-3">
+        <List.Item>
+          {/* Bọc map trong List.Item để đảm bảo cấu trúc DOM hợp lệ */}
           <div className="w-full h-40 rounded-lg overflow-hidden border border-black/10 relative bg-gray-100 shadow-inner">
-            <iframe 
-              width="100%" 
-              height="100%" 
+            <iframe
+              width="100%"
+              height="100%"
               style={{ border: 0 }}
               loading="lazy"
               allowFullScreen
               referrerPolicy="no-referrer-when-downgrade"
               src={`https://maps.google.com/maps?q=${mapQuery}&z=16&output=embed`}
             ></iframe>
-            
+
             {/* Nút Chỉ đường - Mở Google Maps và tự động lấy GPS của Tài xế */}
             <div className="absolute bottom-2 right-2">
-              <Button 
-                size="small" 
+              <Button
+                size="small"
                 variant="secondary"
                 onClick={() => {
                   openWebview({ url: `https://www.google.com/maps/dir/?api=1&destination=${mapQuery}` });
@@ -56,40 +69,48 @@ function OrderInfo(props: { order: any }) {
               </Button>
             </div>
           </div>
-        </div>
+        </List.Item>
       )}
-      
-      <List.Item prefix={<Icon icon="zi-info-circle" />} title="Loại phế liệu">
-        <span className="text-sm font-medium text-right line-clamp-2">
-          {props.order.items?.length > 0 
-            ? props.order.items.map((i: any) => i.product?.name?.replace("Thu mua ", "")).join(", ") 
-            : (props.order.category?.name || "Chưa xác định")}
-        </span>
-      </List.Item>
 
       <List.Item prefix={<Icon icon="zi-clock-1" />} title="Thời gian hẹn lấy">
         <span className="text-sm font-medium text-orange-600">
-          {props.order.pickupTime 
-            ? new Date(props.order.pickupTime).toLocaleString('vi-VN', { 
-                hour: '2-digit', minute: '2-digit', 
-                day: '2-digit', month: '2-digit', year: 'numeric' 
-              }) 
+          {props.order.pickupTime
+            ? new Date(props.order.pickupTime).toLocaleString('vi-VN', {
+                hour: '2-digit', minute: '2-digit',
+                day: '2-digit', month: '2-digit', year: 'numeric'
+              })
             : "Chưa xác định"
           }
         </span>
       </List.Item>
 
-      {/* Hiển thị khối lượng thực tế nếu đơn đã hoàn thành, ngược lại hiển thị khối lượng ước tính */}
-      {props.order.originalStatus === 'COMPLETED' && props.order.actualWeight > 0 ? (
-        <List.Item prefix={<Icon icon="zi-check-circle" />} title="Khối lượng thực tế">
-          <span className="text-sm font-bold text-green-600">{Number(props.order.actualWeight).toLocaleString('en-US')} kg</span>
-        </List.Item>
-      ) : (
-        <List.Item prefix={<Icon icon="zi-list-1" />} title="Khối lượng ước tính">
-          <span className="text-sm text-primary font-medium">{Number(props.order.estimatedWeight).toLocaleString('en-US')} kg</span>
+      {noteText.length > 0 && (
+        <List.Item prefix={<Icon icon="zi-note" />} title="Ghi chú người bán">
+          <span className="text-sm text-right break-words">{noteText}</span>
         </List.Item>
       )}
-    </List>
+      </List>
+
+      {/* Chi tiết phế liệu */}
+      <div className="px-4 pt-3 pb-1 font-semibold text-sm text-gray-800">Chi tiết phế liệu</div>
+      <CollapsibleOrderItems
+        items={props.order.items}
+        defaultExpanded={true}
+        originalStatus={props.order.originalStatus}
+      />
+      <div className="flex justify-between items-center px-4 py-3 border-t border-gray-100">
+        <div className="text-sm font-bold">Tổng khối lượng</div>
+        <div className={`text-sm font-bold ${props.order.originalStatus === 'COMPLETED' ? 'text-green-600' : 'text-primary'}`}>
+          {Number(props.order.actualWeight || props.order.estimatedWeight).toLocaleString('en-US')} kg
+        </div>
+      </div>
+      {props.order.originalStatus === 'COMPLETED' && props.order.total > 0 && (
+        <div className="flex justify-between items-center px-4 pt-2 pb-3 border-t border-gray-100">
+          <div className="text-sm font-bold">Tổng tiền</div>
+          <div className="text-sm font-bold text-orange-600">{Number(props.order.total).toLocaleString('vi-VN')}đ</div>
+        </div>
+      )}
+    </div>
   );
 }
 

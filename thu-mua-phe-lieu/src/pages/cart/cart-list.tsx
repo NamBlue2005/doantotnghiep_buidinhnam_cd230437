@@ -1,5 +1,5 @@
 import { useAtom, useAtomValue } from "jotai";
-import { cartState, productsState, deliveryTimeState } from "@/state";
+import { cartState, productsState, deliveryTimeState, orderNoteState } from "@/state";
 import Section from "@/components/section";
 import { Icon } from "zmp-ui";
 import HorizontalDivider from "@/components/horizontal-divider";
@@ -13,6 +13,7 @@ export default function CartList() {
   const [cart, setCart] = useAtom(cartState);
   const products = useAtomValue(productsState);
   const [deliveryTime, setDeliveryTime] = useAtom(deliveryTimeState);
+  const [note, setNote] = useAtom(orderNoteState);
   const availableProducts = useMemo(
     () => products.filter((product) => isProductAvailable(product)),
     [products]
@@ -139,6 +140,8 @@ export default function CartList() {
         <input
           type="text"
           placeholder="Lưu ý cho tài xế..."
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
           className="text-sm text-right flex-1 focus:outline-none bg-transparent"
         />
       </div>

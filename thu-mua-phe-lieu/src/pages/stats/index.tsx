@@ -14,7 +14,9 @@ export default function StatsPage() {
 
   // Chỉ lọc ra những đơn hàng có trạng thái gốc là COMPLETED để hiển thị trong Lịch sử giao dịch
   const validOrders = completedOrdersLoadable.state === "hasData" 
-    ? completedOrdersLoadable.data.filter((o: any) => o.originalStatus === 'COMPLETED') 
+    ? completedOrdersLoadable.data
+        .filter((o: any) => o.originalStatus === 'COMPLETED')
+        .sort((a, b) => new Date(b.completedAt || b.createdAt).getTime() - new Date(a.completedAt || a.createdAt).getTime())
     : [];
 
   return (

@@ -64,25 +64,28 @@ const NotificationsPage: FC = () => {
           headers: { "ngrok-skip-browser-warning": "true" }
         });
         if (res.ok) {
-          const order = await res.json();
-          // Tái sử dụng logic map trạng thái để các Tab hiển thị đúng
-          order.originalStatus = order.status;
-          order.status = (order.status === 'PENDING' || order.status === 'HAS_OFFERS') ? 'pending' : (order.status === 'COMPLETED' || order.status === 'CANCELLED' ? 'completed' : 'shipping');
-          
-          // SỬA LỖI: Tái sử dụng logic map item giống trong state.ts để đảm bảo đồng bộ
-          const validItems = order.items ? order.items.filter((item: any) => item.product) : [];
-          order.items = validItems.length > 0
+          const rawOrder = await res.json();
+          const validItems = rawOrder.items ? rawOrder.items.filter((item: any) => item.product) : [];
+          const mappedItems = validItems.length > 0
             ? validItems.map((orderItem: any) => ({
                 product: {
                   id: orderItem.product.id,
                   name: `Thu mua ${orderItem.product.name || 'Phế liệu'}`,
                   price: orderItem.product.price || 0,
-                  image: orderItem.product.imageUrl || order.imageUrl || "https://img.freepik.com/free-vector/recycle-symbol_1284-43093.jpg",
+                  image: orderItem.product.imageUrl || rawOrder.imageUrl || "https://img.freepik.com/free-vector/recycle-symbol_1284-43093.jpg",
                 },
                 quantity: orderItem.weight
               }))
-            : [{ product: { id: 0, name: `Thu mua Phế liệu`, price: 0, image: order.imageUrl || "https://img.freepik.com/free-vector/recycle-symbol_1284-43093.jpg" }, quantity: order.estimatedWeight }];
+            : [{ product: { id: 0, name: `Thu mua Phế liệu`, price: 0, image: rawOrder.imageUrl || "https://img.freepik.com/free-vector/recycle-symbol_1284-43093.jpg" }, quantity: rawOrder.estimatedWeight }];
           
+          const order = {
+            ...rawOrder,
+            originalStatus: rawOrder.status,
+            status: (rawOrder.status === 'PENDING' || rawOrder.status === 'HAS_OFFERS') ? 'pending' : (rawOrder.status === 'COMPLETED' || rawOrder.status === 'CANCELLED' ? 'completed' : 'shipping'),
+            items: mappedItems,
+            note: rawOrder.note,
+          };
+
           navigate(`/order/${order.id}`, { state: order }); // Chuyển hướng
         }
       } catch (e) {
